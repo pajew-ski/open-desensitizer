@@ -1,0 +1,819 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OPEN DESENSITIZER</title>
+    <meta name="description" content="Souveränes Biohacking Tool für bilaterale Stimulation und Stressreduktion">
+    <style>
+        :root {
+            /* Dark Mode Variables (Basis) */
+            --bg-color: #050505;
+            --grid-color: rgba(0, 103, 79, 0.08);
+            --text-main: #a0a0a0;
+            --accent: #00674F; /* Jungle Green */
+            --accent-bright: #008f6e; 
+            --accent-dim: rgba(0, 103, 79, 0.3);
+            --panel-bg: rgba(10, 10, 12, 0.90);
+            --font-stack: 'SF Mono', 'Roboto Mono', 'Courier New', monospace;
+            
+            /* Grounding Mode Colors */
+            --ground-bg: #00674F;
+            --ground-text: #ffffff;
+            --ground-circle: rgba(255, 255, 255, 0.15);
+
+            /* Modal Variables (Dark Default) */
+            --modal-overlay: rgba(0,0,0,0.95);
+            --modal-bg: #111;
+            --modal-text: #ddd;
+            --modal-border: #333;
+            --disclaimer-color: #777;
+            --disclaimer-border: #222;
+        }
+
+        /* Light Mode Overrides */
+        body.light-mode {
+            --bg-color: #f4f6f8; /* Weiches, klinisches Grau-Weiß */
+            --grid-color: rgba(0, 103, 79, 0.05);
+            --text-main: #2c3e50;
+            --panel-bg: rgba(255, 255, 255, 0.92);
+            --accent-dim: rgba(0, 103, 79, 0.15);
+
+            /* Modal Variables (Light) */
+            --modal-overlay: rgba(244, 246, 248, 0.98); /* Fast deckendes Weiß für Fokus */
+            --modal-bg: #ffffff;
+            --modal-text: #2c3e50;
+            --modal-border: #e0e0e0;
+            --disclaimer-color: #888;
+            --disclaimer-border: #eee;
+        }
+
+        * { box-sizing: border-box; user-select: none; -webkit-user-select: none; }
+
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            font-family: var(--font-stack);
+            overflow: hidden;
+            height: 100vh;
+            width: 100vw;
+            transition: background-color 0.5s ease, color 0.5s ease;
+        }
+
+        /* 3D Grid Hintergrund */
+        .grid {
+            position: absolute;
+            width: 200vw;
+            height: 200vh;
+            background-image: 
+                linear-gradient(var(--grid-color) 1px, transparent 1px),
+                linear-gradient(90deg, var(--grid-color) 1px, transparent 1px);
+            background-size: 50px 50px;
+            transform: perspective(500px) rotateX(60deg) translateY(-100px) translateZ(-200px);
+            pointer-events: none;
+            z-index: 0;
+            transition: background-image 0.5s ease;
+        }
+
+        #canvas-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+            cursor: none;
+        }
+
+        /* UI Panel - ZENTRIERT */
+        #ui-layer {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 360px;
+            background: var(--panel-bg);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--accent-dim);
+            border-top: 3px solid var(--accent);
+            padding: 35px;
+            z-index: 10;
+            transition: opacity 0.4s ease, transform 0.4s ease, background 0.5s ease;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.15);
+            cursor: default;
+            border-radius: 4px;
+            text-align: center;
+        }
+
+        #ui-layer.hidden {
+            opacity: 0;
+            transform: translate(-50%, -45%) scale(0.95);
+            pointer-events: none;
+        }
+
+        h1 {
+            font-size: 16px;
+            letter-spacing: 3px;
+            margin: 0 0 25px 0;
+            color: var(--accent);
+            text-transform: uppercase;
+            border-bottom: 1px solid var(--accent-dim);
+            padding-bottom: 15px;
+            display: block; /* Block statt Flex, da keine Version mehr daneben steht */
+            text-align: center;
+        }
+
+        .control-row {
+            margin-bottom: 20px;
+            text-align: left;
+        }
+        
+        .split-row {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .label-row {
+            display: flex;
+            justify-content: space-between;
+            font-size: 11px;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-weight: 600;
+        }
+
+        /* Range Slider */
+        input[type=range] {
+            -webkit-appearance: none;
+            width: 100%;
+            background: transparent;
+        }
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            height: 14px;
+            width: 14px;
+            background: var(--accent);
+            cursor: pointer;
+            margin-top: -6px;
+            border-radius: 50%;
+            box-shadow: 0 0 5px var(--accent-dim);
+        }
+        input[type=range]::-webkit-slider-runnable-track {
+            width: 100%;
+            height: 2px;
+            background: var(--text-main);
+            opacity: 0.2;
+        }
+
+        /* Color Input */
+        input[type="color"] {
+            -webkit-appearance: none;
+            border: none;
+            width: 100%;
+            height: 35px;
+            background: none;
+            cursor: pointer;
+            padding: 0;
+        }
+        
+        /* Secondary Buttons */
+        .btn {
+            width: 100%;
+            background: transparent;
+            border: 1px solid var(--text-main);
+            color: var(--text-main);
+            opacity: 0.7;
+            padding: 12px;
+            font-family: var(--font-stack);
+            font-size: 11px;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-top: 8px;
+            letter-spacing: 1px;
+            font-weight: 600;
+        }
+        .btn:hover {
+            border-color: var(--accent);
+            color: var(--accent);
+            opacity: 1;
+            background: var(--accent-dim);
+        }
+        .btn.active {
+            background: var(--accent-dim);
+            border-color: var(--accent);
+            color: var(--accent);
+            opacity: 1;
+            box-shadow: 0 0 10px var(--accent-dim);
+        }
+
+        /* Start Button */
+        #btn-start {
+            background: var(--accent);
+            color: #ffffff;
+            border: none;
+            padding: 18px;
+            font-size: 13px;
+            letter-spacing: 2px;
+            font-weight: bold;
+            opacity: 1;
+            margin-top: 25px;
+            margin-bottom: 15px;
+            box-shadow: 0 5px 20px var(--accent-dim);
+            transform: scale(1);
+        }
+        #btn-start:hover {
+            background: var(--accent-bright);
+            box-shadow: 0 8px 25px var(--accent-dim);
+            transform: translateY(-2px);
+            color: #fff;
+        }
+        
+        /* Panic Button */
+        .btn-panic {
+            border-color: #ff5555;
+            color: #ff5555;
+            margin-top: 25px;
+            font-size: 10px;
+            opacity: 0.6;
+        }
+        .btn-panic:hover {
+            background: #ff5555;
+            color: #fff;
+            opacity: 1;
+        }
+
+        /* Persistent Shortcuts */
+        .shortcuts {
+            position: absolute;
+            bottom: 25px;
+            width: 100%;
+            text-align: center;
+            font-size: 11px;
+            color: var(--text-main);
+            opacity: 0.6;
+            z-index: 5;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            text-shadow: 0 2px 5px rgba(0,0,0,0.1); /* Leichterer Schatten im Light Mode */
+            pointer-events: none;
+            transition: opacity 0.5s ease;
+        }
+
+        /* Grounding Overlay */
+        #grounding-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--ground-bg);
+            z-index: 100;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.8s ease;
+        }
+        #grounding-overlay.active {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        .breath-visual {
+            width: 150px;
+            height: 150px;
+            border-radius: 50%;
+            border: 4px solid rgba(255,255,255,0.3);
+            background: var(--ground-circle);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            color: #fff;
+            font-weight: bold;
+            letter-spacing: 2px;
+            animation: breathe 16s infinite ease-in-out;
+            box-shadow: 0 0 50px rgba(0,0,0,0.1);
+        }
+
+        @keyframes breathe {
+            0%, 20% { transform: scale(1); opacity: 0.8; }
+            20%, 40% { transform: scale(1.6); opacity: 1; }
+            40%, 60% { transform: scale(1.6); opacity: 1; }
+            60%, 80% { transform: scale(1); opacity: 0.8; }
+            80%, 100% { transform: scale(1); opacity: 0.8; }
+        }
+
+        .grounding-text {
+            margin-top: 40px;
+            font-size: 14px;
+            color: #fff;
+            letter-spacing: 1px;
+            text-align: center;
+            line-height: 1.8;
+            opacity: 0.9;
+        }
+        
+        .btn-ground-return {
+            margin-top: 30px;
+            background: transparent;
+            border: 1px solid #fff;
+            color: #fff;
+            padding: 10px 30px;
+            cursor: pointer;
+            font-family: var(--font-stack);
+            text-transform: uppercase;
+            transition: background 0.2s;
+        }
+        .btn-ground-return:hover {
+            background: rgba(255,255,255,0.2);
+        }
+
+        /* SAFETY MODAL */
+        #safety-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--modal-overlay); /* Now Variable */
+            z-index: 200;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(5px);
+        }
+        
+        .modal-content {
+            background: var(--modal-bg); /* Now Variable */
+            border: 1px solid var(--modal-border); /* Now Variable */
+            border-left: 4px solid var(--accent);
+            padding: 40px;
+            max-width: 600px;
+            width: 90%;
+            color: var(--modal-text); /* Now Variable */
+            font-family: var(--font-stack);
+            box-shadow: 0 0 40px rgba(0,0,0,0.1);
+        }
+
+        .modal-title {
+            font-size: 18px;
+            color: var(--accent); 
+            text-transform: uppercase;
+            margin-bottom: 20px;
+            letter-spacing: 2px;
+            font-weight: bold;
+        }
+
+        .modal-body {
+            font-size: 13px;
+            line-height: 1.6;
+            margin-bottom: 30px;
+        }
+        
+        .modal-body ul {
+            padding-left: 20px;
+        }
+        
+        .modal-body li {
+            margin-bottom: 10px;
+        }
+
+        .disclaimer {
+            font-size: 11px;
+            color: var(--disclaimer-color); /* Now Variable */
+            margin-top: 20px;
+            border-top: 1px solid var(--disclaimer-border); /* Now Variable */
+            padding-top: 10px;
+            font-style: italic;
+        }
+
+        #btn-accept {
+            background: var(--accent);
+            color: #fff;
+            border: none;
+            padding: 15px 30px;
+            font-size: 14px;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            width: 100%;
+            font-weight: bold;
+            transition: background 0.3s;
+        }
+        #btn-accept:hover {
+            background: var(--accent-bright);
+        }
+
+    </style>
+</head>
+<body class="light-mode"> <!-- Force Light Mode Init Class -->
+
+    <div class="grid"></div>
+
+    <!-- SAFETY MODAL -->
+    <div id="safety-modal">
+        <div class="modal-content">
+            <div class="modal-title">Sicherheitsprotokoll</div>
+            <div class="modal-body">
+                Willkommen beim <strong>Open Desensitizer</strong>. Bitte lies die folgenden Hinweise sorgfältig durch, bevor du beginnst.
+                <ul>
+                    <li><strong>Epilepsie Warnung:</strong> Dieses Tool nutzt rhythmische visuelle Reize. Nicht verwenden, wenn du an lichtempfindlicher Epilepsie leidest.</li>
+                    <li><strong>Kein Ersatz für Therapie:</strong> Diese Anwendung ist ein Selbsthilfe-Tool ("Biohacking") zur Stressregulation und Entspannung. Sie ersetzt keine klinische Therapie bei schweren Traumata (PTBS).</li>
+                    <li><strong>Eigenverantwortung:</strong> Die Nutzung erfolgt auf eigene Gefahr. Achte auf deine Grenzen.</li>
+                    <li><strong>Not-Aus (Safety Anchor):</strong> Sollten Emotionen oder Körperempfindungen zu intensiv werden, drücke sofort die <strong>LEERTASTE</strong>, um den Erdungs-Modus zu aktivieren.</li>
+                </ul>
+                <p>Anleitung: Folge dem Punkt nur mit den Augen. Halte den Kopf ruhig. Atme gleichmäßig.</p>
+                <div class="disclaimer">
+                    Haftungsausschluss: Die Entwickler übernehmen keine Haftung für gesundheitliche Folgen, die aus der unsachgemäßen Nutzung dieses Tools resultieren.
+                </div>
+            </div>
+            <button id="btn-accept">Verstanden & Akzeptieren</button>
+        </div>
+    </div>
+
+    <!-- UI Layer -->
+    <div id="ui-layer" style="display: none;">
+        <h1>OPEN DESENSITIZER</h1>
+        
+        <div class="control-row">
+            <div class="label-row">
+                <span>Geschwindigkeit</span>
+                <span id="val-speed">0.5 Hz</span>
+            </div>
+            <input type="range" id="inp-speed" min="0.1" max="2.5" step="0.05" value="0.5">
+        </div>
+
+        <div class="control-row">
+            <div class="label-row">
+                <span>Objektgröße</span>
+                <span id="val-size">30 px</span>
+            </div>
+            <input type="range" id="inp-size" min="10" max="100" value="30">
+        </div>
+
+        <div class="control-row">
+            <div class="label-row">
+                <span>Farbe</span>
+            </div>
+            <input type="color" id="inp-color" value="#00674F">
+        </div>
+
+        <div class="split-row">
+            <button id="btn-audio" class="btn" style="margin-top: 0; flex: 1;">Audio: Aus</button>
+            <button id="theme-btn" class="btn" style="margin-top: 0; flex: 1;">Design: Hell</button>
+        </div>
+        
+        <button id="btn-fullscreen" class="btn" style="margin-top: 5px;">Vollbild [F]</button>
+
+        <button id="btn-start" class="btn">SESSION STARTEN</button>
+        
+        <button id="btn-panic" class="btn btn-panic">Not-Aus / Erdung [Space]</button>
+    </div>
+
+    <div class="shortcuts">
+        [H] Menü &nbsp;&nbsp; [Space] Not-Aus &nbsp;&nbsp; [F] Vollbild
+    </div>
+
+    <!-- Canvas -->
+    <div id="canvas-container">
+        <canvas id="main-canvas"></canvas>
+    </div>
+
+    <!-- Grounding / Panic Layer -->
+    <div id="grounding-overlay">
+        <div class="breath-visual">ATMEN</div>
+        <div class="grounding-text">
+            SYSTEM RESET<br>
+            Spüre den Boden unter dir.<br>
+            Du bist sicher im Hier und Jetzt.<br>
+            <button class="btn-ground-return" onclick="app.resetFromGrounding()">Zurück</button>
+        </div>
+    </div>
+
+    <script>
+        /**
+         * OPEN DESENSITIZER
+         * Architecture: Single File, No Deps, Sovereign Data.
+         * Concept: Negentropy through controlled bilateral stimulation.
+         */
+
+        const app = {
+            canvas: document.getElementById('main-canvas'),
+            ctx: null,
+            state: {
+                speed: 0.5,
+                size: 30,
+                color: '#00674F',
+                theme: 'light', // Standard: Hell
+                isRunning: false,
+                audioEnabled: false,
+                isGrounding: false,
+                width: 0,
+                height: 0
+            },
+            audio: {
+                ctx: null,
+                osc: null,
+                panner: null,
+                gain: null
+            },
+            startTime: 0,
+            
+            init() {
+                // Safety Modal Logic
+                const modal = document.getElementById('safety-modal');
+                const ui = document.getElementById('ui-layer');
+                const btnAccept = document.getElementById('btn-accept');
+
+                btnAccept.addEventListener('click', () => {
+                    modal.style.display = 'none'; 
+                    ui.style.display = 'block';   
+                    this.initAudioContextPreload(); 
+                });
+
+                this.ctx = this.canvas.getContext('2d');
+                this.loadSettings();
+                this.resize();
+                this.bindEvents();
+                this.applyTheme();
+                this.updateUI();
+                
+                window.addEventListener('resize', () => this.resize());
+                this.loop();
+            },
+
+            loadSettings() {
+                const saved = localStorage.getItem('open-desensitizer-config');
+                if (saved) {
+                    const parsed = JSON.parse(saved);
+                    this.state.speed = parsed.speed || 0.5;
+                    this.state.size = parsed.size || 30;
+                    this.state.color = parsed.color || '#00674F';
+                    // Wir akzeptieren gespeichertes Theme, aber Default im State ist 'light'
+                    this.state.theme = parsed.theme || 'light';
+                    
+                    document.getElementById('inp-speed').value = this.state.speed;
+                    document.getElementById('inp-size').value = this.state.size;
+                    document.getElementById('inp-color').value = this.state.color;
+                    this.updateCSSVars();
+                }
+            },
+
+            saveSettings() {
+                localStorage.setItem('open-desensitizer-config', JSON.stringify({
+                    speed: this.state.speed,
+                    size: this.state.size,
+                    color: this.state.color,
+                    theme: this.state.theme
+                }));
+            },
+
+            resize() {
+                this.state.width = window.innerWidth;
+                this.state.height = window.innerHeight;
+                this.canvas.width = this.state.width;
+                this.canvas.height = this.state.height;
+            },
+
+            updateCSSVars() {
+                document.documentElement.style.setProperty('--accent', this.state.color);
+                document.documentElement.style.setProperty('--accent-bright', this.state.color); 
+                document.documentElement.style.setProperty('--accent-dim', this.state.color + '40'); 
+            },
+
+            toggleTheme() {
+                this.state.theme = this.state.theme === 'dark' ? 'light' : 'dark';
+                this.applyTheme();
+                this.saveSettings();
+            },
+
+            applyTheme() {
+                const btn = document.getElementById('theme-btn');
+                if (this.state.theme === 'light') {
+                    document.body.classList.add('light-mode');
+                    if(btn) btn.innerText = "Design: Hell";
+                } else {
+                    document.body.classList.remove('light-mode');
+                    if(btn) btn.innerText = "Design: Dunkel";
+                }
+            },
+
+            // --- Audio System ---
+            initAudioContextPreload() {
+                const AudioContext = window.AudioContext || window.webkitAudioContext;
+                this.audio.ctx = new AudioContext();
+                this.audio.panner = this.audio.ctx.createStereoPanner();
+                this.audio.gain = this.audio.ctx.createGain();
+                this.audio.gain.gain.value = 0.05;
+                this.audio.panner.connect(this.audio.gain);
+                this.audio.gain.connect(this.audio.ctx.destination);
+            },
+
+            toggleAudio() {
+                if (!this.audio.ctx) this.initAudioContextPreload();
+                
+                if (this.audio.ctx.state === 'suspended') {
+                    this.audio.ctx.resume();
+                }
+
+                this.state.audioEnabled = !this.state.audioEnabled;
+                const btn = document.getElementById('btn-audio');
+                if (this.state.audioEnabled) {
+                    btn.innerText = "Audio: An";
+                    btn.classList.add('active');
+                } else {
+                    btn.innerText = "Audio: Aus";
+                    btn.classList.remove('active');
+                    this.stopSound();
+                }
+            },
+
+            startSound() {
+                if (!this.state.audioEnabled || !this.audio.ctx) return;
+                this.stopSound();
+
+                this.audio.osc = this.audio.ctx.createOscillator();
+                this.audio.osc.type = 'sine';
+                this.audio.osc.frequency.value = 160; 
+                
+                this.audio.gain.gain.cancelScheduledValues(this.audio.ctx.currentTime);
+                this.audio.gain.gain.setValueAtTime(0, this.audio.ctx.currentTime);
+                this.audio.gain.gain.linearRampToValueAtTime(0.15, this.audio.ctx.currentTime + 0.5);
+
+                this.audio.osc.connect(this.audio.panner);
+                this.audio.osc.start();
+            },
+
+            stopSound() {
+                if (this.audio.osc) {
+                    const currTime = this.audio.ctx ? this.audio.ctx.currentTime : 0;
+                    try {
+                        this.audio.gain.gain.linearRampToValueAtTime(0, currTime + 0.2);
+                        setTimeout(() => {
+                            if(this.audio.osc) {
+                                this.audio.osc.stop();
+                                this.audio.osc.disconnect();
+                                this.audio.osc = null;
+                            }
+                        }, 250);
+                    } catch(e) {
+                        if(this.audio.osc) this.audio.osc.stop();
+                        this.audio.osc = null;
+                    }
+                }
+            },
+
+            updateAudioPan(xNorm) {
+                if (this.audio.panner) {
+                    this.audio.panner.pan.value = xNorm * 0.85; 
+                }
+            },
+
+            // --- Core Loop ---
+            startSession() {
+                if(this.state.isRunning) return;
+                this.state.isRunning = true;
+                this.state.startTime = performance.now();
+                
+                document.getElementById('ui-layer').classList.add('hidden');
+                document.getElementById('canvas-container').style.cursor = 'none';
+                
+                document.querySelector('.shortcuts').style.opacity = '0.3';
+
+                if(this.state.audioEnabled) this.startSound();
+            },
+
+            stopSession() {
+                this.state.isRunning = false;
+                document.getElementById('ui-layer').classList.remove('hidden');
+                document.getElementById('canvas-container').style.cursor = 'default';
+                document.querySelector('.shortcuts').style.opacity = '0.6';
+                this.stopSound();
+                this.ctx.clearRect(0,0, this.state.width, this.state.height);
+            },
+
+            triggerGrounding() {
+                this.state.isGrounding = true;
+                this.state.isRunning = false;
+                this.stopSound();
+                
+                document.getElementById('grounding-overlay').classList.add('active');
+                document.getElementById('ui-layer').classList.add('hidden');
+            },
+
+            resetFromGrounding() {
+                this.state.isGrounding = false;
+                document.getElementById('grounding-overlay').classList.remove('active');
+                document.getElementById('ui-layer').classList.remove('hidden');
+                this.ctx.clearRect(0,0, this.state.width, this.state.height);
+            },
+
+            loop(timestamp) {
+                requestAnimationFrame((t) => this.loop(t));
+
+                if (!this.state.isRunning || this.state.isGrounding) {
+                    if (!this.state.isRunning && !this.state.isGrounding) {
+                        this.ctx.clearRect(0, 0, this.state.width, this.state.height);
+                    }
+                    return;
+                }
+
+                if (this.state.theme === 'light') {
+                    this.ctx.fillStyle = 'rgba(240, 242, 245, 0.25)'; 
+                } else {
+                    this.ctx.fillStyle = 'rgba(5, 5, 5, 0.25)'; 
+                }
+                this.ctx.fillRect(0, 0, this.state.width, this.state.height);
+
+                const elapsed = (timestamp - this.state.startTime) / 1000;
+                const xRaw = Math.sin(2 * Math.PI * this.state.speed * elapsed);
+                
+                const padding = this.state.width * 0.1;
+                const range = (this.state.width / 2) - padding;
+                const centerX = this.state.width / 2;
+                
+                const x = centerX + (xRaw * range);
+                const y = this.state.height / 2;
+
+                this.ctx.beginPath();
+                this.ctx.arc(x, y, this.state.size / 2, 0, Math.PI * 2);
+                this.ctx.fillStyle = this.state.color;
+                
+                this.ctx.shadowBlur = this.state.theme === 'light' ? 15 : 25;
+                this.ctx.shadowColor = this.state.color;
+                
+                this.ctx.fill();
+                this.ctx.shadowBlur = 0; 
+
+                if (this.state.audioEnabled) {
+                    this.updateAudioPan(xRaw);
+                }
+            },
+
+            toggleFullscreen() {
+                if (!document.fullscreenElement) {
+                    document.documentElement.requestFullscreen();
+                } else {
+                    if (document.exitFullscreen) document.exitFullscreen();
+                }
+            },
+
+            updateUI() {
+                document.getElementById('val-speed').innerText = this.state.speed + " Hz";
+                document.getElementById('val-size').innerText = this.state.size + " px";
+                this.saveSettings();
+            },
+
+            bindEvents() {
+                document.getElementById('inp-speed').addEventListener('input', (e) => {
+                    this.state.speed = parseFloat(e.target.value);
+                    this.updateUI();
+                });
+                document.getElementById('inp-size').addEventListener('input', (e) => {
+                    this.state.size = parseInt(e.target.value);
+                    this.updateUI();
+                });
+                document.getElementById('inp-color').addEventListener('input', (e) => {
+                    this.state.color = e.target.value;
+                    this.updateCSSVars();
+                    this.saveSettings();
+                });
+
+                document.getElementById('btn-audio').addEventListener('click', () => this.toggleAudio());
+                document.getElementById('btn-start').addEventListener('click', () => this.startSession());
+                document.getElementById('btn-fullscreen').addEventListener('click', () => this.toggleFullscreen());
+                document.getElementById('btn-panic').addEventListener('click', () => this.triggerGrounding());
+                document.getElementById('theme-btn').addEventListener('click', () => this.toggleTheme());
+
+                window.addEventListener('keydown', (e) => {
+                    if (e.code === 'Space') {
+                        if (this.state.isGrounding) return;
+                        this.triggerGrounding();
+                    }
+                    if (e.code === 'KeyH') {
+                        document.getElementById('ui-layer').classList.toggle('hidden');
+                    }
+                    if (e.code === 'KeyF') {
+                        this.toggleFullscreen();
+                    }
+                    if (e.code === 'Escape') {
+                        if (this.state.isRunning) this.stopSession();
+                    }
+                });
+            }
+        };
+
+        window.onload = () => app.init();
+
+    </script>
+</body>
+</html>
