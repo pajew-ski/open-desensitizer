@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="de">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -11,19 +12,20 @@
             --bg-color: #050505;
             --grid-color: rgba(0, 103, 79, 0.08);
             --text-main: #a0a0a0;
-            --accent: #00674F; /* Jungle Green */
-            --accent-bright: #008f6e; 
+            --accent: #00674F;
+            /* Jungle Green */
+            --accent-bright: #008f6e;
             --accent-dim: rgba(0, 103, 79, 0.3);
             --panel-bg: rgba(10, 10, 12, 0.90);
             --font-stack: 'SF Mono', 'Roboto Mono', 'Courier New', monospace;
-            
+
             /* Grounding Mode Colors */
             --ground-bg: #00674F;
             --ground-text: #ffffff;
             --ground-circle: rgba(255, 255, 255, 0.15);
 
             /* Modal Variables (Dark Default) */
-            --modal-overlay: rgba(0,0,0,0.95);
+            --modal-overlay: rgba(0, 0, 0, 0.95);
             --modal-bg: #111;
             --modal-text: #ddd;
             --modal-border: #333;
@@ -33,14 +35,16 @@
 
         /* Light Mode Overrides */
         body.light-mode {
-            --bg-color: #f4f6f8; /* Weiches, klinisches Grau-Weiß */
+            --bg-color: #f4f6f8;
+            /* Weiches, klinisches Grau-Weiß */
             --grid-color: rgba(0, 103, 79, 0.05);
             --text-main: #2c3e50;
             --panel-bg: rgba(255, 255, 255, 0.92);
             --accent-dim: rgba(0, 103, 79, 0.15);
 
             /* Modal Variables (Light) */
-            --modal-overlay: rgba(244, 246, 248, 0.98); /* Fast deckendes Weiß für Fokus */
+            --modal-overlay: rgba(244, 246, 248, 0.98);
+            /* Fast deckendes Weiß für Fokus */
             --modal-bg: #ffffff;
             --modal-text: #2c3e50;
             --modal-border: #e0e0e0;
@@ -48,7 +52,11 @@
             --disclaimer-border: #eee;
         }
 
-        * { box-sizing: border-box; user-select: none; -webkit-user-select: none; }
+        * {
+            box-sizing: border-box;
+            user-select: none;
+            -webkit-user-select: none;
+        }
 
         body {
             margin: 0;
@@ -67,7 +75,7 @@
             position: absolute;
             width: 200vw;
             height: 200vh;
-            background-image: 
+            background-image:
                 linear-gradient(var(--grid-color) 1px, transparent 1px),
                 linear-gradient(90deg, var(--grid-color) 1px, transparent 1px);
             background-size: 50px 50px;
@@ -102,7 +110,7 @@
             padding: 35px;
             z-index: 10;
             transition: opacity 0.4s ease, transform 0.4s ease, background 0.5s ease;
-            box-shadow: 0 20px 50px rgba(0,0,0,0.15);
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.15);
             cursor: default;
             border-radius: 4px;
             text-align: center;
@@ -122,7 +130,8 @@
             text-transform: uppercase;
             border-bottom: 1px solid var(--accent-dim);
             padding-bottom: 15px;
-            display: block; /* Block statt Flex, da keine Version mehr daneben steht */
+            display: block;
+            /* Block statt Flex, da keine Version mehr daneben steht */
             text-align: center;
         }
 
@@ -130,7 +139,7 @@
             margin-bottom: 20px;
             text-align: left;
         }
-        
+
         .split-row {
             display: flex;
             gap: 10px;
@@ -153,6 +162,7 @@
             width: 100%;
             background: transparent;
         }
+
         input[type=range]::-webkit-slider-thumb {
             -webkit-appearance: none;
             height: 14px;
@@ -163,6 +173,7 @@
             border-radius: 50%;
             box-shadow: 0 0 5px var(--accent-dim);
         }
+
         input[type=range]::-webkit-slider-runnable-track {
             width: 100%;
             height: 2px;
@@ -180,7 +191,7 @@
             cursor: pointer;
             padding: 0;
         }
-        
+
         /* Secondary Buttons */
         .btn {
             width: 100%;
@@ -198,12 +209,14 @@
             letter-spacing: 1px;
             font-weight: 600;
         }
+
         .btn:hover {
             border-color: var(--accent);
             color: var(--accent);
             opacity: 1;
             background: var(--accent-dim);
         }
+
         .btn.active {
             background: var(--accent-dim);
             border-color: var(--accent);
@@ -227,13 +240,14 @@
             box-shadow: 0 5px 20px var(--accent-dim);
             transform: scale(1);
         }
+
         #btn-start:hover {
             background: var(--accent-bright);
             box-shadow: 0 8px 25px var(--accent-dim);
             transform: translateY(-2px);
             color: #fff;
         }
-        
+
         /* Panic Button */
         .btn-panic {
             border-color: #ff5555;
@@ -242,6 +256,7 @@
             font-size: 10px;
             opacity: 0.6;
         }
+
         .btn-panic:hover {
             background: #ff5555;
             color: #fff;
@@ -260,7 +275,8 @@
             z-index: 5;
             letter-spacing: 2px;
             text-transform: uppercase;
-            text-shadow: 0 2px 5px rgba(0,0,0,0.1); /* Leichterer Schatten im Light Mode */
+            text-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            /* Leichterer Schatten im Light Mode */
             pointer-events: none;
             transition: opacity 0.5s ease;
         }
@@ -282,6 +298,7 @@
             pointer-events: none;
             transition: opacity 0.8s ease;
         }
+
         #grounding-overlay.active {
             opacity: 1;
             pointer-events: all;
@@ -291,7 +308,7 @@
             width: 150px;
             height: 150px;
             border-radius: 50%;
-            border: 4px solid rgba(255,255,255,0.3);
+            border: 4px solid rgba(255, 255, 255, 0.3);
             background: var(--ground-circle);
             display: flex;
             align-items: center;
@@ -301,15 +318,40 @@
             font-weight: bold;
             letter-spacing: 2px;
             animation: breathe 16s infinite ease-in-out;
-            box-shadow: 0 0 50px rgba(0,0,0,0.1);
+            box-shadow: 0 0 50px rgba(0, 0, 0, 0.1);
         }
 
         @keyframes breathe {
-            0%, 20% { transform: scale(1); opacity: 0.8; }
-            20%, 40% { transform: scale(1.6); opacity: 1; }
-            40%, 60% { transform: scale(1.6); opacity: 1; }
-            60%, 80% { transform: scale(1); opacity: 0.8; }
-            80%, 100% { transform: scale(1); opacity: 0.8; }
+
+            0%,
+            20% {
+                transform: scale(1);
+                opacity: 0.8;
+            }
+
+            20%,
+            40% {
+                transform: scale(1.6);
+                opacity: 1;
+            }
+
+            40%,
+            60% {
+                transform: scale(1.6);
+                opacity: 1;
+            }
+
+            60%,
+            80% {
+                transform: scale(1);
+                opacity: 0.8;
+            }
+
+            80%,
+            100% {
+                transform: scale(1);
+                opacity: 0.8;
+            }
         }
 
         .grounding-text {
@@ -321,7 +363,7 @@
             line-height: 1.8;
             opacity: 0.9;
         }
-        
+
         .btn-ground-return {
             margin-top: 30px;
             background: transparent;
@@ -333,8 +375,9 @@
             text-transform: uppercase;
             transition: background 0.2s;
         }
+
         .btn-ground-return:hover {
-            background: rgba(255,255,255,0.2);
+            background: rgba(255, 255, 255, 0.2);
         }
 
         /* SAFETY MODAL */
@@ -344,29 +387,33 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: var(--modal-overlay); /* Now Variable */
+            background: var(--modal-overlay);
+            /* Now Variable */
             z-index: 200;
             display: flex;
             align-items: center;
             justify-content: center;
             backdrop-filter: blur(5px);
         }
-        
+
         .modal-content {
-            background: var(--modal-bg); /* Now Variable */
-            border: 1px solid var(--modal-border); /* Now Variable */
+            background: var(--modal-bg);
+            /* Now Variable */
+            border: 1px solid var(--modal-border);
+            /* Now Variable */
             border-left: 4px solid var(--accent);
             padding: 40px;
             max-width: 600px;
             width: 90%;
-            color: var(--modal-text); /* Now Variable */
+            color: var(--modal-text);
+            /* Now Variable */
             font-family: var(--font-stack);
-            box-shadow: 0 0 40px rgba(0,0,0,0.1);
+            box-shadow: 0 0 40px rgba(0, 0, 0, 0.1);
         }
 
         .modal-title {
             font-size: 18px;
-            color: var(--accent); 
+            color: var(--accent);
             text-transform: uppercase;
             margin-bottom: 20px;
             letter-spacing: 2px;
@@ -378,20 +425,22 @@
             line-height: 1.6;
             margin-bottom: 30px;
         }
-        
+
         .modal-body ul {
             padding-left: 20px;
         }
-        
+
         .modal-body li {
             margin-bottom: 10px;
         }
 
         .disclaimer {
             font-size: 11px;
-            color: var(--disclaimer-color); /* Now Variable */
+            color: var(--disclaimer-color);
+            /* Now Variable */
             margin-top: 20px;
-            border-top: 1px solid var(--disclaimer-border); /* Now Variable */
+            border-top: 1px solid var(--disclaimer-border);
+            /* Now Variable */
             padding-top: 10px;
             font-style: italic;
         }
@@ -409,12 +458,13 @@
             font-weight: bold;
             transition: background 0.3s;
         }
+
         #btn-accept:hover {
             background: var(--accent-bright);
         }
-
     </style>
 </head>
+
 <body class="light-mode"> <!-- Force Light Mode Init Class -->
 
     <div class="grid"></div>
@@ -424,16 +474,23 @@
         <div class="modal-content">
             <div class="modal-title">Sicherheitsprotokoll</div>
             <div class="modal-body">
-                Willkommen beim <strong>Open Desensitizer</strong>. Bitte lies die folgenden Hinweise sorgfältig durch, bevor du beginnst.
+                Willkommen beim <strong>Open Desensitizer</strong>. Bitte lies die folgenden Hinweise sorgfältig durch,
+                bevor du beginnst.
                 <ul>
-                    <li><strong>Epilepsie Warnung:</strong> Dieses Tool nutzt rhythmische visuelle Reize. Nicht verwenden, wenn du an lichtempfindlicher Epilepsie leidest.</li>
-                    <li><strong>Kein Ersatz für Therapie:</strong> Diese Anwendung ist ein Selbsthilfe-Tool ("Biohacking") zur Stressregulation und Entspannung. Sie ersetzt keine klinische Therapie bei schweren Traumata (PTBS).</li>
-                    <li><strong>Eigenverantwortung:</strong> Die Nutzung erfolgt auf eigene Gefahr. Achte auf deine Grenzen.</li>
-                    <li><strong>Not-Aus (Safety Anchor):</strong> Sollten Emotionen oder Körperempfindungen zu intensiv werden, drücke sofort die <strong>LEERTASTE</strong>, um den Erdungs-Modus zu aktivieren.</li>
+                    <li><strong>Epilepsie Warnung:</strong> Dieses Tool nutzt rhythmische visuelle Reize. Nicht
+                        verwenden, wenn du an lichtempfindlicher Epilepsie leidest.</li>
+                    <li><strong>Kein Ersatz für Therapie:</strong> Diese Anwendung ist ein Selbsthilfe-Tool
+                        ("Biohacking") zur Stressregulation und Entspannung. Sie ersetzt keine klinische Therapie bei
+                        schweren Traumata (PTBS).</li>
+                    <li><strong>Eigenverantwortung:</strong> Die Nutzung erfolgt auf eigene Gefahr. Achte auf deine
+                        Grenzen.</li>
+                    <li><strong>Not-Aus (Safety Anchor):</strong> Sollten Emotionen oder Körperempfindungen zu intensiv
+                        werden, drücke sofort die <strong>LEERTASTE</strong>, um den Erdungs-Modus zu aktivieren.</li>
                 </ul>
                 <p>Anleitung: Folge dem Punkt nur mit den Augen. Halte den Kopf ruhig. Atme gleichmäßig.</p>
                 <div class="disclaimer">
-                    Haftungsausschluss: Die Entwickler übernehmen keine Haftung für gesundheitliche Folgen, die aus der unsachgemäßen Nutzung dieses Tools resultieren.
+                    Haftungsausschluss: Die Entwickler übernehmen keine Haftung für gesundheitliche Folgen, die aus der
+                    unsachgemäßen Nutzung dieses Tools resultieren.
                 </div>
             </div>
             <button id="btn-accept">Verstanden & Akzeptieren</button>
@@ -443,7 +500,7 @@
     <!-- UI Layer -->
     <div id="ui-layer" style="display: none;">
         <h1>OPEN DESENSITIZER</h1>
-        
+
         <div class="control-row">
             <div class="label-row">
                 <span>Geschwindigkeit</span>
@@ -471,11 +528,11 @@
             <button id="btn-audio" class="btn" style="margin-top: 0; flex: 1;">Audio: Aus</button>
             <button id="theme-btn" class="btn" style="margin-top: 0; flex: 1;">Design: Hell</button>
         </div>
-        
+
         <button id="btn-fullscreen" class="btn" style="margin-top: 5px;">Vollbild [F]</button>
 
         <button id="btn-start" class="btn">SESSION STARTEN</button>
-        
+
         <button id="btn-panic" class="btn btn-panic">Not-Aus / Erdung [Space]</button>
     </div>
 
@@ -527,7 +584,7 @@
                 gain: null
             },
             startTime: 0,
-            
+
             init() {
                 // Safety Modal Logic
                 const modal = document.getElementById('safety-modal');
@@ -535,9 +592,9 @@
                 const btnAccept = document.getElementById('btn-accept');
 
                 btnAccept.addEventListener('click', () => {
-                    modal.style.display = 'none'; 
-                    ui.style.display = 'block';   
-                    this.initAudioContextPreload(); 
+                    modal.style.display = 'none';
+                    ui.style.display = 'block';
+                    this.initAudioContextPreload();
                 });
 
                 this.ctx = this.canvas.getContext('2d');
@@ -546,7 +603,7 @@
                 this.bindEvents();
                 this.applyTheme();
                 this.updateUI();
-                
+
                 window.addEventListener('resize', () => this.resize());
                 this.loop();
             },
@@ -560,7 +617,7 @@
                     this.state.color = parsed.color || '#00674F';
                     // Wir akzeptieren gespeichertes Theme, aber Default im State ist 'light'
                     this.state.theme = parsed.theme || 'light';
-                    
+
                     document.getElementById('inp-speed').value = this.state.speed;
                     document.getElementById('inp-size').value = this.state.size;
                     document.getElementById('inp-color').value = this.state.color;
@@ -586,8 +643,8 @@
 
             updateCSSVars() {
                 document.documentElement.style.setProperty('--accent', this.state.color);
-                document.documentElement.style.setProperty('--accent-bright', this.state.color); 
-                document.documentElement.style.setProperty('--accent-dim', this.state.color + '40'); 
+                document.documentElement.style.setProperty('--accent-bright', this.state.color);
+                document.documentElement.style.setProperty('--accent-dim', this.state.color + '40');
             },
 
             toggleTheme() {
@@ -600,10 +657,10 @@
                 const btn = document.getElementById('theme-btn');
                 if (this.state.theme === 'light') {
                     document.body.classList.add('light-mode');
-                    if(btn) btn.innerText = "Design: Hell";
+                    if (btn) btn.innerText = "Design: Hell";
                 } else {
                     document.body.classList.remove('light-mode');
-                    if(btn) btn.innerText = "Design: Dunkel";
+                    if (btn) btn.innerText = "Design: Dunkel";
                 }
             },
 
@@ -620,7 +677,7 @@
 
             toggleAudio() {
                 if (!this.audio.ctx) this.initAudioContextPreload();
-                
+
                 if (this.audio.ctx.state === 'suspended') {
                     this.audio.ctx.resume();
                 }
@@ -643,8 +700,8 @@
 
                 this.audio.osc = this.audio.ctx.createOscillator();
                 this.audio.osc.type = 'sine';
-                this.audio.osc.frequency.value = 160; 
-                
+                this.audio.osc.frequency.value = 160;
+
                 this.audio.gain.gain.cancelScheduledValues(this.audio.ctx.currentTime);
                 this.audio.gain.gain.setValueAtTime(0, this.audio.ctx.currentTime);
                 this.audio.gain.gain.linearRampToValueAtTime(0.15, this.audio.ctx.currentTime + 0.5);
@@ -659,14 +716,14 @@
                     try {
                         this.audio.gain.gain.linearRampToValueAtTime(0, currTime + 0.2);
                         setTimeout(() => {
-                            if(this.audio.osc) {
+                            if (this.audio.osc) {
                                 this.audio.osc.stop();
                                 this.audio.osc.disconnect();
                                 this.audio.osc = null;
                             }
                         }, 250);
-                    } catch(e) {
-                        if(this.audio.osc) this.audio.osc.stop();
+                    } catch (e) {
+                        if (this.audio.osc) this.audio.osc.stop();
                         this.audio.osc = null;
                     }
                 }
@@ -674,22 +731,22 @@
 
             updateAudioPan(xNorm) {
                 if (this.audio.panner) {
-                    this.audio.panner.pan.value = xNorm * 0.85; 
+                    this.audio.panner.pan.value = xNorm * 0.85;
                 }
             },
 
             // --- Core Loop ---
             startSession() {
-                if(this.state.isRunning) return;
+                if (this.state.isRunning) return;
                 this.state.isRunning = true;
                 this.state.startTime = performance.now();
-                
+
                 document.getElementById('ui-layer').classList.add('hidden');
                 document.getElementById('canvas-container').style.cursor = 'none';
-                
+
                 document.querySelector('.shortcuts').style.opacity = '0.3';
 
-                if(this.state.audioEnabled) this.startSound();
+                if (this.state.audioEnabled) this.startSound();
             },
 
             stopSession() {
@@ -698,14 +755,14 @@
                 document.getElementById('canvas-container').style.cursor = 'default';
                 document.querySelector('.shortcuts').style.opacity = '0.6';
                 this.stopSound();
-                this.ctx.clearRect(0,0, this.state.width, this.state.height);
+                this.ctx.clearRect(0, 0, this.state.width, this.state.height);
             },
 
             triggerGrounding() {
                 this.state.isGrounding = true;
                 this.state.isRunning = false;
                 this.stopSound();
-                
+
                 document.getElementById('grounding-overlay').classList.add('active');
                 document.getElementById('ui-layer').classList.add('hidden');
             },
@@ -714,7 +771,7 @@
                 this.state.isGrounding = false;
                 document.getElementById('grounding-overlay').classList.remove('active');
                 document.getElementById('ui-layer').classList.remove('hidden');
-                this.ctx.clearRect(0,0, this.state.width, this.state.height);
+                this.ctx.clearRect(0, 0, this.state.width, this.state.height);
             },
 
             loop(timestamp) {
@@ -728,31 +785,31 @@
                 }
 
                 if (this.state.theme === 'light') {
-                    this.ctx.fillStyle = 'rgba(240, 242, 245, 0.25)'; 
+                    this.ctx.fillStyle = 'rgba(240, 242, 245, 0.25)';
                 } else {
-                    this.ctx.fillStyle = 'rgba(5, 5, 5, 0.25)'; 
+                    this.ctx.fillStyle = 'rgba(5, 5, 5, 0.25)';
                 }
                 this.ctx.fillRect(0, 0, this.state.width, this.state.height);
 
                 const elapsed = (timestamp - this.state.startTime) / 1000;
                 const xRaw = Math.sin(2 * Math.PI * this.state.speed * elapsed);
-                
+
                 const padding = this.state.width * 0.1;
                 const range = (this.state.width / 2) - padding;
                 const centerX = this.state.width / 2;
-                
+
                 const x = centerX + (xRaw * range);
                 const y = this.state.height / 2;
 
                 this.ctx.beginPath();
                 this.ctx.arc(x, y, this.state.size / 2, 0, Math.PI * 2);
                 this.ctx.fillStyle = this.state.color;
-                
+
                 this.ctx.shadowBlur = this.state.theme === 'light' ? 15 : 25;
                 this.ctx.shadowColor = this.state.color;
-                
+
                 this.ctx.fill();
-                this.ctx.shadowBlur = 0; 
+                this.ctx.shadowBlur = 0;
 
                 if (this.state.audioEnabled) {
                     this.updateAudioPan(xRaw);
@@ -817,4 +874,5 @@
 
     </script>
 </body>
+
 </html>
