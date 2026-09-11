@@ -479,6 +479,7 @@
     const TONE_HZ = 160;
     const TONE_GAIN = 0.15;
     const BREATH_PHASE_MS = 4000;
+    const TRAIL_ALPHA = 0.3;
 
     const $ = (id) => document.getElementById(id);
 
@@ -508,7 +509,7 @@
       grounding: false,
       startedAt: 0,
       frame: 0,
-      colors: { bg: "#fff", text: "#000", trail: "rgba(255,255,255,0.3)" },
+      colors: { bg: "#fff", text: "#000" },
     };
 
     const audio = { ctx: null, panner: null, gain: null, osc: null };
@@ -549,17 +550,12 @@
 
     // Colors: the tokens are oklch; the canvas gets the resolved values from its
     // own computed style so it follows the color scheme without a second palette.
+    // The strings are used as they come (browsers may return oklch, not rgb),
+    // so the trail is painted through globalAlpha rather than a parsed rgba.
 
     function readColors() {
       const style = getComputedStyle(ui.canvas);
-      const bg = style.backgroundColor;
-      const text = style.color;
-      const m = bg.match(/[\d.]+/g) || ["255", "255", "255"];
-      state.colors = {
-        bg,
-        text,
-        trail: `rgba(${m[0]}, ${m[1]}, ${m[2]}, 0.3)`,
-      };
+      state.colors = { bg: style.backgroundColor, text: style.color };
     }
 
     function resize() {
@@ -657,8 +653,10 @@
       const cx = w / 2 + x * range;
       const cy = h / 2;
 
-      ctx.fillStyle = state.colors.trail;
+      ctx.globalAlpha = TRAIL_ALPHA;
+      ctx.fillStyle = state.colors.bg;
       ctx.fillRect(0, 0, w, h);
+      ctx.globalAlpha = 1;
       ctx.beginPath();
       ctx.arc(cx, cy, state.size / 2, 0, Math.PI * 2);
       ctx.fillStyle = state.colors.text;
