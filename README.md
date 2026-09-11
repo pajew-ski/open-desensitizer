@@ -1,88 +1,41 @@
-# Open Desensitizer
+# open desensitizer
 
-> **Ein Open-Source Tool für Bilaterale Stimulation, Stressreduktion und Trauma-Integration.**
+Bilateral stimulation in the browser. A dot moves from side to side, an optional tone follows it between the ears, and a grounding exercise is one key away. One HTML file with everything in it, nothing else.
 
-[![License: Unlicense](https://img.shields.io/badge/license-Unlicense-blue.svg)](http://unlicense.org/)
-[![Status: Live](https://img.shields.io/badge/Status-Live_Demo-green)](https://pajew-ski.github.io/open-desensitizer/)
+**Site**: [pajew-ski.github.io/open-desensitizer](https://pajew-ski.github.io/open-desensitizer/)
 
-**Open Desensitizer** ist eine minimalistische Web-Applikation für **Bilaterale Stimulation** (ähnlich dem visuellen und auditiven Teil von EMDR). Sie nutzt rhythmische Augenbewegungen und alternierende Töne, um die Kommunikation zwischen den Gehirnhälften zu synchronisieren, die Amygdala-Aktivität zu dämpfen und Stress oder belastende Emotionen zu verarbeiten.
+## How it works
 
-**Live Demo:** [https://pajew-ski.github.io/open-desensitizer/](https://pajew-ski.github.io/open-desensitizer/)
+Bilateral stimulation alternates a stimulus between the left and the right side of the body. Here that is a point the eyes track across the screen and, if you want it, a 160 Hz sine tone that pans in step with it. The eye movement resembles the rapid eye movement of dreaming sleep, and the same left-right alternation is the mechanical part of EMDR therapy. Used on its own it tends to settle the nervous system; used while holding a difficult memory in mind it can make that memory easier to carry.
 
----
+The page is a document that explains the tool and holds its two settings, speed and dot size. Starting a session covers the page with a canvas. Pressing Space at any time covers everything with the grounding screen: colors inverted, a circle that breathes in a four second box, and a line to read.
 
-## Das Konzept
+Everything runs locally. Nothing is sent anywhere. The settings are kept in `localStorage`.
 
-Wenn wir gestresst sind oder starke Emotionen verarbeiten, ist unser rationales Denken (Präfrontaler Cortex) oft vom emotionalen Zentrum (Amygdala) abgekoppelt. Bilaterale Stimulation hilft dabei, diese Blockade zu lösen.
+## Using it
 
-* **Visuell:** Das Verfolgen eines sich bewegenden Objekts mit den Augen imitiert den **REM-Schlaf** (Rapid Eye Movement), den natürlichen Verarbeitungsmechanismus des Gehirns.
-* **Auditiv:** Panning-Sounds (Links/Rechts) unterstützen die neurologische Integration zusätzlich.
-* **Souverän:** Ein Werkzeug zur Selbstregulation, das zu 100% dir gehört. Keine Clouds, keine Tracker, volle Kontrolle.
+1. Sit comfortably. Put on headphones if you turn the tone on.
+2. Choose a speed. One full left-right cycle per second is 1 Hz; most people settle between 0.5 and 1 Hz.
+3. Start the session and follow the dot with your eyes only. Keep your head still.
+4. Think of what you want to work on, or think of nothing and let it settle you.
+5. Space starts the grounding exercise, Esc stops the session, F toggles fullscreen. The same controls sit in the corner of the session for touch screens.
 
----
+## Before you use it
 
-## Features
+This is a self-help tool, not therapy, and it does not replace treatment for trauma. Do not use it with photosensitive epilepsy. With a dissociative disorder, ask a clinician first. Use it at your own responsibility, and stop when it stops feeling right.
 
-* **Visuelle Stimulation:** Anpassbare Geschwindigkeit (Hz), Objektgröße und Farbe für die Augenführung.
-* **Auditive Stimulation:** Optionaler Sinuston, der synchron zur Bewegung zwischen dem linken und rechten Ohr wandert (Web Audio API Panning).
-* **Safety Anchor (Not-Aus):** Ein integrierter **Grounding-Modus**. Wenn eine Session zu intensiv wird, führt dich die Leertaste sofort in eine geführte Atemübung zur Stabilisierung zurück.
-* **Adaptives UI:** Wähle zwischen einem klaren **Light Mode** (klinisch/fokussiert) und einem augenschonenden **Dark Mode** (entspannt/Nacht).
-* **Privacy First:** Die App läuft vollständig lokal in deinem Browser. Deine emotionalen Prozesse gehen niemanden etwas an.
-
----
-
-## Nutzung
-
-1.  **Vorbereitung:** Setze dich bequem hin. Wenn du Audio nutzen möchtest, trage Kopfhörer.
-2.  **Einstellung:**
-    * Wähle eine Geschwindigkeit, die angenehm, aber fordernd für die Augen ist (meist 0.5 Hz - 1.0 Hz).
-    * Wähle eine Farbe, die du als beruhigend empfindest (Standard ist "smaragdgrün").
-3.  **Start:** Drücke "Session Starten" oder nutze den Vollbildmodus [F].
-4.  **Prozess:** Halte den Kopf still und folge dem Punkt nur mit den Augen. Denke an das Thema, das du bearbeiten möchtest (Desensibilisierung) oder nutze es einfach zur Entspannung (Ressourcierung).
-5.  **Notfall:** Sollten die Gefühle überwältigend werden, drücke die **LEERTASTE**. Der Schirm wird grün, die Bewegung stoppt, und eine Atem-Hilfe erscheint.
-
----
-
-## Wichtiger Haftungsausschluss
-
-**Dieses Tool ist "Biohacking"-Software zur Selbsthilfe und Stressregulation.**
-
-* Es ersetzt **keine** professionelle Traumatherapie.
-* Nutze es nicht, wenn du an **Epilepsie** oder schweren dissoziativen Störungen leidest, ohne vorherige ärztliche Absprache.
-* Die Nutzung erfolgt auf eigene Verantwortung.
-
----
-
-## Installation (Lokal)
-
-Da es sich um eine einzelne HTML-Datei handelt ("Single File Component"), ist die Installation trivial:
+## Running it locally
 
 ```bash
-# Repository klonen
-git clone [https://github.com/pajew-ski/open-desensitizer.git](https://github.com/pajew-ski/open-desensitizer.git)
-
-# Öffnen
+git clone https://github.com/pajew-ski/open-desensitizer.git
 cd open-desensitizer
 open index.html
-````
+```
 
------
+The whole app is `index.html`; copy that one file anywhere and it runs. There is no build step and no dependency. Any static host serves it as is; on GitHub Pages, deploy from the root of `main`. The footer links adapt to a fork automatically.
 
-## Tech Stack
+Everything here was built by a coding agent from [AGENTS.md](AGENTS.md), which is the design and behavior spec of the tool.
 
-  * **HTML5 Canvas:** Für flüssige 60fps Animationen.
-  * **Web Audio API:** Für präzises Stereo-Panning.
-  * **Vanilla JS:** Keine Frameworks, keine Abhängigkeiten.
-  * **CSS Variables:** Für dynamisches Theming.
+## License
 
------
-
-## Lizenz
-
-Dieses Projekt ist unter der **Unlicense** veröffentlicht. Das bedeutet, es ist **Public Domain**. Du kannst den Code kopieren, verändern, verkaufen oder als Basis für eigene (kommerzielle oder private) Projekte nutzen, ohne um Erlaubnis zu fragen.
-
-Wissen und Werkzeuge zur Heilung sollten frei sein. Dieses Werkzeug soll jedem frei zur Verfügung stehen, der Heilung oder Ruhe sucht.
-
------
-
-Made with 🤍 in Regensburg.
+Public domain under the [Unlicense](LICENSE). Copy it, change it, sell it, build on it. Tools for calming down should be free.

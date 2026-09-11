@@ -1,878 +1,773 @@
-<!DOCTYPE html>
-<html lang="de">
-
+<!doctype html>
+<html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Open Desensitizer</title>
-    <meta name="description" content="Souveränes Biohacking Tool für bilaterale Stimulation und Stressreduktion">
-    <style>
-        :root {
-            /* Dark Mode Variables (Basis) */
-            --bg-color: #050505;
-            --grid-color: rgba(0, 103, 79, 0.08);
-            --text-main: #a0a0a0;
-            --accent: #00674F;
-            /* Jungle Green */
-            --accent-bright: #008f6e;
-            --accent-dim: rgba(0, 103, 79, 0.3);
-            --panel-bg: rgba(10, 10, 12, 0.90);
-            --font-stack: 'SF Mono', 'Roboto Mono', 'Courier New', monospace;
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>open desensitizer</title>
+  <meta name="description" content="Bilateral stimulation in the browser: a dot that moves from side to side, an optional tone that follows it, and a grounding exercise one key away.">
+  <link rel="icon" href="data:,">
+  <style>
+    /* Design tokens, shared with temet-nosce.
+       Color is strictly achromatic: oklch with chroma 0 cannot tint, light and
+       dark share one scale and flip with prefers-color-scheme. Geometry derives
+       from φ: the spacing ladder is the Fibonacci sequence, the type scale is
+       powers of φ. */
 
-            /* Grounding Mode Colors */
-            --ground-bg: #00674F;
-            --ground-text: #ffffff;
-            --ground-circle: rgba(255, 255, 255, 0.15);
+    :root {
+      color-scheme: light dark;
+      --bg: oklch(98% 0 0);
+      --surface: oklch(94% 0 0);
+      --border: oklch(85% 0 0);
+      --text: oklch(15% 0 0);
+      --text-muted: oklch(40% 0 0);
 
-            /* Modal Variables (Dark Default) */
-            --modal-overlay: rgba(0, 0, 0, 0.95);
-            --modal-bg: #111;
-            --modal-text: #ddd;
-            --modal-border: #333;
-            --disclaimer-color: #777;
-            --disclaimer-border: #222;
-        }
+      --space-1: 5px;
+      --space-2: 8px;
+      --space-3: 13px;
+      --space-4: 21px;
+      --space-5: 34px;
+      --space-6: 55px;
+      --space-7: 89px;
+      --space-8: 144px;
+      --radius-sm: var(--space-1);
+      --radius-md: var(--space-2);
+      --radius-lg: var(--space-3);
 
-        /* Light Mode Overrides */
-        body.light-mode {
-            --bg-color: #f4f6f8;
-            /* Weiches, klinisches Grau-Weiß */
-            --grid-color: rgba(0, 103, 79, 0.05);
-            --text-main: #2c3e50;
-            --panel-bg: rgba(255, 255, 255, 0.92);
-            --accent-dim: rgba(0, 103, 79, 0.15);
+      --text-sm: 0.875rem;     /* 14px, captions; deliberately not 1/φ, legibility floor */
+      --text-base: 1rem;       /* browser default, respects user zoom */
+      --text-lg: 1.618rem;     /* φ¹ */
+      --text-xl: 2.618rem;     /* φ² */
+      --text-2xl: 4.236rem;    /* φ³ */
 
-            /* Modal Variables (Light) */
-            --modal-overlay: rgba(244, 246, 248, 0.98);
-            /* Fast deckendes Weiß für Fokus */
-            --modal-bg: #ffffff;
-            --modal-text: #2c3e50;
-            --modal-border: #e0e0e0;
-            --disclaimer-color: #888;
-            --disclaimer-border: #eee;
-        }
+      font-family: system-ui, sans-serif;
+      font-size: var(--text-base);
+      line-height: 1.618;
+      background: var(--bg);
+      color: var(--text);
+    }
 
-        * {
-            box-sizing: border-box;
-            user-select: none;
-            -webkit-user-select: none;
-        }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: oklch(15% 0 0);
+        --surface: oklch(20% 0 0);
+        --border: oklch(30% 0 0);
+        --text: oklch(95% 0 0);
+        --text-muted: oklch(70% 0 0);
+      }
+    }
 
-        body {
-            margin: 0;
-            padding: 0;
-            background-color: var(--bg-color);
-            color: var(--text-main);
-            font-family: var(--font-stack);
-            overflow: hidden;
-            height: 100vh;
-            width: 100vw;
-            transition: background-color 0.5s ease, color 0.5s ease;
-        }
+    body {
+      margin: 0;
+    }
 
-        /* 3D Grid Hintergrund */
-        .grid {
-            position: absolute;
-            width: 200vw;
-            height: 200vh;
-            background-image:
-                linear-gradient(var(--grid-color) 1px, transparent 1px),
-                linear-gradient(90deg, var(--grid-color) 1px, transparent 1px);
-            background-size: 50px 50px;
-            transform: perspective(500px) rotateX(60deg) translateY(-100px) translateZ(-200px);
-            pointer-events: none;
-            z-index: 0;
-            transition: background-image 0.5s ease;
-        }
+    [hidden] {
+      display: none !important;
+    }
 
-        #canvas-container {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: 1;
-            cursor: none;
-        }
+    .shell {
+      max-width: 987px;
+      margin: 0 auto;
+      padding: 0 var(--space-4);
+    }
 
-        /* UI Panel - ZENTRIERT */
-        #ui-layer {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            width: 360px;
-            background: var(--panel-bg);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            border: 1px solid var(--accent-dim);
-            border-top: 3px solid var(--accent);
-            padding: 35px;
-            z-index: 10;
-            transition: opacity 0.4s ease, transform 0.4s ease, background 0.5s ease;
-            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.15);
-            cursor: default;
-            border-radius: 4px;
-            text-align: center;
-        }
+    a {
+      color: inherit;
+      text-underline-offset: 3px;
+    }
 
-        #ui-layer.hidden {
-            opacity: 0;
-            transform: translate(-50%, -45%) scale(0.95);
-            pointer-events: none;
-        }
+    :focus-visible {
+      outline: 2px solid var(--text-muted);
+      outline-offset: 2px;
+    }
 
-        h1 {
-            font-size: 16px;
-            letter-spacing: 3px;
-            margin: 0 0 25px 0;
-            color: var(--accent);
-            text-transform: uppercase;
-            border-bottom: 1px solid var(--accent-dim);
-            padding-bottom: 15px;
-            display: block;
-            /* Block statt Flex, da keine Version mehr daneben steht */
-            text-align: center;
-        }
+    /* Hero */
 
-        .control-row {
-            margin-bottom: 20px;
-            text-align: left;
-        }
+    .hero {
+      padding-block: var(--space-8) var(--space-6);
+    }
 
-        .split-row {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 20px;
-        }
+    .hero h1 {
+      margin: 0;
+      font-size: clamp(var(--text-xl), 9vw, var(--text-2xl));
+      font-weight: 600;
+      letter-spacing: -0.02em;
+      line-height: 1;
+    }
 
-        .label-row {
-            display: flex;
-            justify-content: space-between;
-            font-size: 11px;
-            margin-bottom: 8px;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            font-weight: 600;
-        }
+    .hero p {
+      margin: var(--space-4) 0 0;
+      max-width: 34rem;
+      color: var(--text-muted);
+    }
 
-        /* Range Slider */
-        input[type=range] {
-            -webkit-appearance: none;
-            width: 100%;
-            background: transparent;
-        }
+    /* Sections */
 
-        input[type=range]::-webkit-slider-thumb {
-            -webkit-appearance: none;
-            height: 14px;
-            width: 14px;
-            background: var(--accent);
-            cursor: pointer;
-            margin-top: -6px;
-            border-radius: 50%;
-            box-shadow: 0 0 5px var(--accent-dim);
-        }
+    main section {
+      margin: 0 0 var(--space-7);
+    }
 
-        input[type=range]::-webkit-slider-runnable-track {
-            width: 100%;
-            height: 2px;
-            background: var(--text-main);
-            opacity: 0.2;
-        }
+    main h2 {
+      margin: 0 0 var(--space-4);
+      font-size: var(--text-lg);
+      font-weight: 600;
+      line-height: 1.2;
+    }
 
-        /* Color Input */
-        input[type="color"] {
-            -webkit-appearance: none;
-            border: none;
-            width: 100%;
-            height: 35px;
-            background: none;
-            cursor: pointer;
-            padding: 0;
-        }
+    main h3 {
+      margin: 0 0 var(--space-2);
+      font-size: var(--text-sm);
+      font-weight: 400;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
 
-        /* Secondary Buttons */
-        .btn {
-            width: 100%;
-            background: transparent;
-            border: 1px solid var(--text-main);
-            color: var(--text-main);
-            opacity: 0.7;
-            padding: 12px;
-            font-family: var(--font-stack);
-            font-size: 11px;
-            text-transform: uppercase;
-            cursor: pointer;
-            transition: all 0.2s;
-            margin-top: 8px;
-            letter-spacing: 1px;
-            font-weight: 600;
-        }
+    main section > p,
+    main section > ul {
+      margin: 0 0 var(--space-3);
+      max-width: 42rem;
+    }
 
-        .btn:hover {
-            border-color: var(--accent);
-            color: var(--accent);
-            opacity: 1;
-            background: var(--accent-dim);
-        }
+    main section > ul {
+      padding-left: var(--space-4);
+    }
 
-        .btn.active {
-            background: var(--accent-dim);
-            border-color: var(--accent);
-            color: var(--accent);
-            opacity: 1;
-            box-shadow: 0 0 10px var(--accent-dim);
-        }
+    main section > ul li {
+      margin-bottom: var(--space-1);
+    }
 
-        /* Start Button */
-        #btn-start {
-            background: var(--accent);
-            color: #ffffff;
-            border: none;
-            padding: 18px;
-            font-size: 13px;
-            letter-spacing: 2px;
-            font-weight: bold;
-            opacity: 1;
-            margin-top: 25px;
-            margin-bottom: 15px;
-            box-shadow: 0 5px 20px var(--accent-dim);
-            transform: scale(1);
-        }
+    .caption {
+      color: var(--text-muted);
+      font-size: var(--text-sm);
+    }
 
-        #btn-start:hover {
-            background: var(--accent-bright);
-            box-shadow: 0 8px 25px var(--accent-dim);
-            transform: translateY(-2px);
-            color: #fff;
-        }
+    table {
+      border-collapse: collapse;
+      font-size: var(--text-sm);
+      margin: 0 0 var(--space-3);
+    }
 
-        /* Panic Button */
-        .btn-panic {
-            border-color: #ff5555;
-            color: #ff5555;
-            margin-top: 25px;
-            font-size: 10px;
-            opacity: 0.6;
-        }
+    th,
+    td {
+      text-align: left;
+      padding: var(--space-1) var(--space-4) var(--space-1) 0;
+      border-bottom: 1px solid var(--border);
+      vertical-align: top;
+    }
 
-        .btn-panic:hover {
-            background: #ff5555;
-            color: #fff;
-            opacity: 1;
-        }
+    th {
+      font-weight: 600;
+    }
 
-        /* Persistent Shortcuts */
-        .shortcuts {
-            position: absolute;
-            bottom: 25px;
-            width: 100%;
-            text-align: center;
-            font-size: 11px;
-            color: var(--text-main);
-            opacity: 0.6;
-            z-index: 5;
-            letter-spacing: 2px;
-            text-transform: uppercase;
-            text-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-            /* Leichterer Schatten im Light Mode */
-            pointer-events: none;
-            transition: opacity 0.5s ease;
-        }
+    /* Controls: a labelled slider or field. The label row carries the name on the
+       left and the live value on the right. */
 
-        /* Grounding Overlay */
-        #grounding-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: var(--ground-bg);
-            z-index: 100;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            opacity: 0;
-            pointer-events: none;
-            transition: opacity 0.8s ease;
-        }
+    .controls {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(233px, 1fr));
+      gap: var(--space-4) var(--space-5);
+      max-width: 42rem;
+      margin: 0 0 var(--space-4);
+    }
 
-        #grounding-overlay.active {
-            opacity: 1;
-            pointer-events: all;
-        }
+    .control {
+      display: block;
+    }
 
-        .breath-visual {
-            width: 150px;
-            height: 150px;
-            border-radius: 50%;
-            border: 4px solid rgba(255, 255, 255, 0.3);
-            background: var(--ground-circle);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 16px;
-            color: #fff;
-            font-weight: bold;
-            letter-spacing: 2px;
-            animation: breathe 16s infinite ease-in-out;
-            box-shadow: 0 0 50px rgba(0, 0, 0, 0.1);
-        }
+    .control-label {
+      display: flex;
+      justify-content: space-between;
+      gap: var(--space-3);
+      font-size: var(--text-sm);
+      margin-bottom: var(--space-1);
+    }
 
-        @keyframes breathe {
+    .control-label output {
+      color: var(--text-muted);
+      font-variant-numeric: tabular-nums;
+    }
 
-            0%,
-            20% {
-                transform: scale(1);
-                opacity: 0.8;
-            }
+    .control-check {
+      display: flex;
+      align-items: center;
+      gap: var(--space-2);
+      font-size: var(--text-sm);
+    }
 
-            20%,
-            40% {
-                transform: scale(1.6);
-                opacity: 1;
-            }
+    input[type="range"],
+    input[type="checkbox"] {
+      accent-color: var(--text);
+    }
 
-            40%,
-            60% {
-                transform: scale(1.6);
-                opacity: 1;
-            }
+    input[type="range"] {
+      display: block;
+      width: 100%;
+      margin: 0;
+    }
 
-            60%,
-            80% {
-                transform: scale(1);
-                opacity: 0.8;
-            }
+    input[type="checkbox"] {
+      width: 1rem;
+      height: 1rem;
+      margin: 0;
+    }
 
-            80%,
-            100% {
-                transform: scale(1);
-                opacity: 0.8;
-            }
-        }
+    input[type="number"],
+    input[type="time"] {
+      font: inherit;
+      font-size: var(--text-sm);
+      font-variant-numeric: tabular-nums;
+      color: var(--text);
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: var(--space-1) var(--space-2);
+      width: 100%;
+      box-sizing: border-box;
+    }
 
-        .grounding-text {
-            margin-top: 40px;
-            font-size: 14px;
-            color: #fff;
-            letter-spacing: 1px;
-            text-align: center;
-            line-height: 1.8;
-            opacity: 0.9;
-        }
+    input[type="number"]:focus-visible,
+    input[type="time"]:focus-visible {
+      outline-offset: 0;
+    }
 
-        .btn-ground-return {
-            margin-top: 30px;
-            background: transparent;
-            border: 1px solid #fff;
-            color: #fff;
-            padding: 10px 30px;
-            cursor: pointer;
-            font-family: var(--font-stack);
-            text-transform: uppercase;
-            transition: background 0.2s;
-        }
+    /* Buttons. The primary button is inverted like a user message in temet-nosce:
+       text-colored surface, background-colored label. */
 
-        .btn-ground-return:hover {
-            background: rgba(255, 255, 255, 0.2);
-        }
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--space-2);
+      margin: 0 0 var(--space-3);
+    }
 
-        /* SAFETY MODAL */
-        #safety-modal {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: var(--modal-overlay);
-            /* Now Variable */
-            z-index: 200;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            backdrop-filter: blur(5px);
-        }
+    .button {
+      font: inherit;
+      font-size: var(--text-sm);
+      color: var(--text);
+      background: none;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: var(--space-2) var(--space-4);
+      cursor: pointer;
+    }
 
-        .modal-content {
-            background: var(--modal-bg);
-            /* Now Variable */
-            border: 1px solid var(--modal-border);
-            /* Now Variable */
-            border-left: 4px solid var(--accent);
-            padding: 40px;
-            max-width: 600px;
-            width: 90%;
-            color: var(--modal-text);
-            /* Now Variable */
-            font-family: var(--font-stack);
-            box-shadow: 0 0 40px rgba(0, 0, 0, 0.1);
-        }
+    .button:hover {
+      background: var(--surface);
+    }
 
-        .modal-title {
-            font-size: 18px;
-            color: var(--accent);
-            text-transform: uppercase;
-            margin-bottom: 20px;
-            letter-spacing: 2px;
-            font-weight: bold;
-        }
+    .button:disabled {
+      color: var(--text-muted);
+      cursor: default;
+      background: none;
+    }
 
-        .modal-body {
-            font-size: 13px;
-            line-height: 1.6;
-            margin-bottom: 30px;
-        }
+    .button.primary {
+      color: var(--bg);
+      background: var(--text);
+      border-color: var(--text);
+    }
 
-        .modal-body ul {
-            padding-left: 20px;
-        }
+    .button.primary:hover {
+      background: var(--text-muted);
+      border-color: var(--text-muted);
+    }
 
-        .modal-body li {
-            margin-bottom: 10px;
-        }
+    .button.primary:disabled {
+      background: var(--border);
+      border-color: var(--border);
+      color: var(--text-muted);
+    }
 
-        .disclaimer {
-            font-size: 11px;
-            color: var(--disclaimer-color);
-            /* Now Variable */
-            margin-top: 20px;
-            border-top: 1px solid var(--disclaimer-border);
-            /* Now Variable */
-            padding-top: 10px;
-            font-style: italic;
-        }
+    /* Footer */
 
-        #btn-accept {
-            background: var(--accent);
-            color: #fff;
-            border: none;
-            padding: 15px 30px;
-            font-size: 14px;
-            cursor: pointer;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            width: 100%;
-            font-weight: bold;
-            transition: background 0.3s;
-        }
+    footer {
+      border-top: 1px solid var(--border);
+      padding: var(--space-5) 0 var(--space-6);
+      color: var(--text-muted);
+      font-size: var(--text-sm);
+    }
 
-        #btn-accept:hover {
-            background: var(--accent-bright);
-        }
-    </style>
+    @media (max-width: 800px) {
+      .hero {
+        padding-block-start: var(--space-7);
+      }
+    }
+
+    /* Session stage: covers the page while the dot runs. The canvas carries the
+       page tokens as its own colors so the script can read resolved values from it
+       (canvas fillStyle wants a concrete color, and the tokens are oklch). */
+
+    .stage {
+      position: fixed;
+      inset: 0;
+      z-index: 10;
+      background: var(--bg);
+      cursor: none;
+    }
+
+    .stage canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+      background: var(--bg);
+      color: var(--text);
+    }
+
+    .stage-bar {
+      position: absolute;
+      right: var(--space-4);
+      bottom: var(--space-4);
+      display: flex;
+      gap: var(--space-2);
+      opacity: 0.4;
+      transition: opacity 0.3s;
+      cursor: default;
+    }
+
+    .stage-bar:hover,
+    .stage-bar:focus-within {
+      opacity: 1;
+    }
+
+    .stage-bar .button {
+      background: var(--bg);
+    }
+
+    /* Grounding: the page inverted. Text becomes ground, ground becomes text, the
+       same inversion as the primary button. A circle grows and shrinks in a four
+       second box: in, hold, out, hold. */
+
+    .grounding {
+      position: fixed;
+      inset: 0;
+      z-index: 20;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: var(--space-5);
+      padding: var(--space-4);
+      background: var(--text);
+      color: var(--bg);
+      text-align: center;
+    }
+
+    .breath {
+      width: var(--space-8);
+      height: var(--space-8);
+      margin: var(--space-6);
+      border-radius: 50%;
+      border: 1px solid currentColor;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: var(--text-sm);
+      transform: scale(1);
+      transition: transform 4s ease-in-out;
+    }
+
+    .breath.in {
+      transform: scale(1.618);
+    }
+
+    .grounding p {
+      margin: 0;
+      max-width: 34rem;
+    }
+
+    .button.inverted {
+      color: var(--bg);
+      border-color: var(--bg);
+    }
+
+    .button.inverted:hover {
+      background: var(--text-muted);
+    }
+  </style>
 </head>
+<body>
+  <header class="hero shell">
+    <h1>open desensitizer</h1>
+    <p>A dot moves from left to right. Your eyes follow it. That is the whole tool.</p>
+  </header>
 
-<body class="light-mode"> <!-- Force Light Mode Init Class -->
+  <main class="shell">
+    <section id="how">
+      <h2>How it works</h2>
+      <p>Bilateral stimulation alternates a stimulus between the left and the right side: here a point that the eyes track across the screen, and optionally a tone that moves between the ears in step with it. The eye movement resembles the rapid eye movement of dreaming sleep, and the same left-right alternation is the mechanical part of EMDR therapy.</p>
+      <p>Used on its own, it tends to settle the nervous system. Used while holding a difficult memory or feeling in mind, it can make that memory easier to carry. Sessions are short; ten to fifteen minutes is plenty.</p>
+      <p>Everything runs in this page. Nothing is sent anywhere, and the settings stay in your browser.</p>
+    </section>
 
-    <div class="grid"></div>
+    <section id="before">
+      <h2>Before you start</h2>
+      <ul>
+        <li>This is a self-help tool, not therapy. It does not replace treatment for trauma.</li>
+        <li>Do not use it with photosensitive epilepsy. With a dissociative disorder, ask a clinician first.</li>
+        <li>Sit comfortably, keep your head still, and move only your eyes. Use headphones if you turn the tone on.</li>
+        <li>If a session becomes too intense, press Space. The movement stops and a breathing exercise takes over.</li>
+      </ul>
+    </section>
 
-    <!-- SAFETY MODAL -->
-    <div id="safety-modal">
-        <div class="modal-content">
-            <div class="modal-title">Sicherheitsprotokoll</div>
-            <div class="modal-body">
-                Willkommen beim <strong>Open Desensitizer</strong>. Bitte lies die folgenden Hinweise sorgfältig durch,
-                bevor du beginnst.
-                <ul>
-                    <li><strong>Epilepsie Warnung:</strong> Dieses Tool nutzt rhythmische visuelle Reize. Nicht
-                        verwenden, wenn du an lichtempfindlicher Epilepsie leidest.</li>
-                    <li><strong>Kein Ersatz für Therapie:</strong> Diese Anwendung ist ein Selbsthilfe-Tool
-                        ("Biohacking") zur Stressregulation und Entspannung. Sie ersetzt keine klinische Therapie bei
-                        schweren Traumata (PTBS).</li>
-                    <li><strong>Eigenverantwortung:</strong> Die Nutzung erfolgt auf eigene Gefahr. Achte auf deine
-                        Grenzen.</li>
-                    <li><strong>Not-Aus (Safety Anchor):</strong> Sollten Emotionen oder Körperempfindungen zu intensiv
-                        werden, drücke sofort die <strong>LEERTASTE</strong>, um den Erdungs-Modus zu aktivieren.</li>
-                </ul>
-                <p>Anleitung: Folge dem Punkt nur mit den Augen. Halte den Kopf ruhig. Atme gleichmäßig.</p>
-                <div class="disclaimer">
-                    Haftungsausschluss: Die Entwickler übernehmen keine Haftung für gesundheitliche Folgen, die aus der
-                    unsachgemäßen Nutzung dieses Tools resultieren.
-                </div>
-            </div>
-            <button id="btn-accept">Verstanden & Akzeptieren</button>
-        </div>
+    <section id="session">
+      <h2>Session</h2>
+      <div class="controls">
+        <label class="control">
+          <span class="control-label"><span>Speed</span><output id="val-speed">0.5 Hz</output></span>
+          <input type="range" id="inp-speed" min="0.1" max="2.5" step="0.05" value="0.5">
+        </label>
+        <label class="control">
+          <span class="control-label"><span>Dot size</span><output id="val-size">30 px</output></span>
+          <input type="range" id="inp-size" min="10" max="100" step="1" value="30">
+        </label>
+        <label class="control control-check">
+          <input type="checkbox" id="inp-audio">
+          <span>Tone that follows the dot</span>
+        </label>
+      </div>
+      <div class="actions">
+        <button type="button" id="btn-start" class="button primary">Start session</button>
+        <button type="button" id="btn-ground" class="button">Grounding exercise</button>
+      </div>
+      <p class="caption">During a session: Space for grounding, Esc to stop, F for fullscreen. One full cycle per second is 1 Hz; most people settle between 0.5 and 1 Hz.</p>
+    </section>
+  </main>
+
+  <footer>
+    <div class="shell">
+      open desensitizer · built from <a id="agents-link" href="https://github.com/pajew-ski/open-desensitizer/blob/main/AGENTS.md">AGENTS.md</a> by a coding agent · <a id="source-link" href="https://github.com/pajew-ski/open-desensitizer">source on GitHub</a>
     </div>
+  </footer>
 
-    <!-- UI Layer -->
-    <div id="ui-layer" style="display: none;">
-        <h1>OPEN DESENSITIZER</h1>
-
-        <div class="control-row">
-            <div class="label-row">
-                <span>Geschwindigkeit</span>
-                <span id="val-speed">0.5 Hz</span>
-            </div>
-            <input type="range" id="inp-speed" min="0.1" max="2.5" step="0.05" value="0.5">
-        </div>
-
-        <div class="control-row">
-            <div class="label-row">
-                <span>Objektgröße</span>
-                <span id="val-size">30 px</span>
-            </div>
-            <input type="range" id="inp-size" min="10" max="100" value="30">
-        </div>
-
-        <div class="control-row">
-            <div class="label-row">
-                <span>Farbe</span>
-            </div>
-            <input type="color" id="inp-color" value="#00674F">
-        </div>
-
-        <div class="split-row">
-            <button id="btn-audio" class="btn" style="margin-top: 0; flex: 1;">Audio: Aus</button>
-            <button id="theme-btn" class="btn" style="margin-top: 0; flex: 1;">Design: Hell</button>
-        </div>
-
-        <button id="btn-fullscreen" class="btn" style="margin-top: 5px;">Vollbild [F]</button>
-
-        <button id="btn-start" class="btn">SESSION STARTEN</button>
-
-        <button id="btn-panic" class="btn btn-panic">Not-Aus / Erdung [Space]</button>
+  <!-- Session: a canvas that covers the page while the dot runs. -->
+  <div id="stage" class="stage" hidden>
+    <canvas id="canvas" aria-label="A dot moving from side to side"></canvas>
+    <div class="stage-bar">
+      <button type="button" id="btn-stage-ground" class="button">Grounding</button>
+      <button type="button" id="btn-stage-stop" class="button">Stop</button>
     </div>
+  </div>
 
-    <div class="shortcuts">
-        [H] Menü &nbsp;&nbsp; [Space] Not-Aus &nbsp;&nbsp; [F] Vollbild
-    </div>
+  <!-- Grounding: inverted colors, a circle that breathes in a four second box. -->
+  <div id="grounding" class="grounding" hidden role="dialog" aria-modal="true" aria-labelledby="grounding-text">
+    <div class="breath" id="breath"><span id="breath-word">Breathe in</span></div>
+    <p id="grounding-text">Feel the ground beneath you.<br>You are here, now.</p>
+    <button type="button" id="btn-return" class="button inverted">Return</button>
+  </div>
 
-    <!-- Canvas -->
-    <div id="canvas-container">
-        <canvas id="main-canvas"></canvas>
-    </div>
+  <script type="module">
+    // Point the footer at whichever repository this site was deployed from, so a
+    // fork needs no manual edit. On <owner>.github.io/<repo>/ the owner and repo
+    // come straight from the URL; anywhere else (localhost, a custom domain) the
+    // static hrefs above stay as the fallback.
+    const host = location.hostname;
+    if (host.endsWith(".github.io")) {
+      const owner = host.slice(0, -".github.io".length);
+      const repo = location.pathname.split("/").filter(Boolean)[0] || `${owner}.github.io`;
+      const base = `https://github.com/${owner}/${repo}`;
+      document.querySelector("#source-link").href = base;
+      document.querySelector("#agents-link").href = `${base}/blob/main/AGENTS.md`;
+    }
+  </script>
+  <script type="module">
+    // open desensitizer
+    // One file, no dependencies. The page is a document; the session is an
+    // overlay on top of it. The dot follows a sine wave, the optional tone pans
+    // with it, and Space at any time replaces both with a breathing exercise.
 
-    <!-- Grounding / Panic Layer -->
-    <div id="grounding-overlay">
-        <div class="breath-visual">ATMEN</div>
-        <div class="grounding-text">
-            SYSTEM RESET<br>
-            Spüre den Boden unter dir.<br>
-            Du bist sicher im Hier und Jetzt.<br>
-            <button class="btn-ground-return" onclick="app.resetFromGrounding()">Zurück</button>
-        </div>
-    </div>
+    const STORAGE_KEY = "open-desensitizer";
+    const TONE_HZ = 160;
+    const TONE_GAIN = 0.15;
+    const BREATH_PHASE_MS = 4000;
 
-    <script>
-        /**
-         * OPEN DESENSITIZER
-         * Architecture: Single File, No Deps, Sovereign Data.
-         * Concept: Negentropy through controlled bilateral stimulation.
-         */
+    const $ = (id) => document.getElementById(id);
 
-        const app = {
-            canvas: document.getElementById('main-canvas'),
-            ctx: null,
-            state: {
-                speed: 0.5,
-                size: 30,
-                color: '#00674F',
-                theme: 'light', // Standard: Hell
-                isRunning: false,
-                audioEnabled: false,
-                isGrounding: false,
-                width: 0,
-                height: 0
-            },
-            audio: {
-                ctx: null,
-                osc: null,
-                panner: null,
-                gain: null
-            },
-            startTime: 0,
+    const ui = {
+      speed: $("inp-speed"),
+      size: $("inp-size"),
+      audio: $("inp-audio"),
+      valSpeed: $("val-speed"),
+      valSize: $("val-size"),
+      start: $("btn-start"),
+      ground: $("btn-ground"),
+      stage: $("stage"),
+      canvas: $("canvas"),
+      stageGround: $("btn-stage-ground"),
+      stageStop: $("btn-stage-stop"),
+      grounding: $("grounding"),
+      breath: $("breath"),
+      breathWord: $("breath-word"),
+      back: $("btn-return"),
+    };
 
-            init() {
-                // Safety Modal Logic
-                const modal = document.getElementById('safety-modal');
-                const ui = document.getElementById('ui-layer');
-                const btnAccept = document.getElementById('btn-accept');
+    const state = {
+      speed: 0.5,
+      size: 30,
+      audio: false,
+      running: false,
+      grounding: false,
+      startedAt: 0,
+      frame: 0,
+      colors: { bg: "#fff", text: "#000", trail: "rgba(255,255,255,0.3)" },
+    };
 
-                btnAccept.addEventListener('click', () => {
-                    modal.style.display = 'none';
-                    ui.style.display = 'block';
-                    this.initAudioContextPreload();
-                });
+    const audio = { ctx: null, panner: null, gain: null, osc: null };
+    const ctx = ui.canvas.getContext("2d");
 
-                this.ctx = this.canvas.getContext('2d');
-                this.loadSettings();
-                this.resize();
-                this.bindEvents();
-                this.applyTheme();
-                this.updateUI();
+    // Settings
 
-                window.addEventListener('resize', () => this.resize());
-                this.loop();
-            },
+    function load() {
+      try {
+        const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}");
+        if (typeof saved.speed === "number") state.speed = saved.speed;
+        if (typeof saved.size === "number") state.size = saved.size;
+        if (typeof saved.audio === "boolean") state.audio = saved.audio;
+      } catch {
+        // Storage may be unavailable; defaults are fine.
+      }
+      ui.speed.value = state.speed;
+      ui.size.value = state.size;
+      ui.audio.checked = state.audio;
+      render();
+    }
 
-            loadSettings() {
-                const saved = localStorage.getItem('open-desensitizer-config');
-                if (saved) {
-                    const parsed = JSON.parse(saved);
-                    this.state.speed = parsed.speed || 0.5;
-                    this.state.size = parsed.size || 30;
-                    this.state.color = parsed.color || '#00674F';
-                    // Wir akzeptieren gespeichertes Theme, aber Default im State ist 'light'
-                    this.state.theme = parsed.theme || 'light';
+    function save() {
+      try {
+        localStorage.setItem(
+          STORAGE_KEY,
+          JSON.stringify({ speed: state.speed, size: state.size, audio: state.audio }),
+        );
+      } catch {
+        // Ignore; the session works without persistence.
+      }
+    }
 
-                    document.getElementById('inp-speed').value = this.state.speed;
-                    document.getElementById('inp-size').value = this.state.size;
-                    document.getElementById('inp-color').value = this.state.color;
-                    this.updateCSSVars();
-                }
-            },
+    function render() {
+      ui.valSpeed.textContent = `${state.speed.toFixed(2)} Hz`;
+      ui.valSize.textContent = `${state.size} px`;
+    }
 
-            saveSettings() {
-                localStorage.setItem('open-desensitizer-config', JSON.stringify({
-                    speed: this.state.speed,
-                    size: this.state.size,
-                    color: this.state.color,
-                    theme: this.state.theme
-                }));
-            },
+    // Colors: the tokens are oklch; the canvas gets the resolved values from its
+    // own computed style so it follows the color scheme without a second palette.
 
-            resize() {
-                this.state.width = window.innerWidth;
-                this.state.height = window.innerHeight;
-                this.canvas.width = this.state.width;
-                this.canvas.height = this.state.height;
-            },
+    function readColors() {
+      const style = getComputedStyle(ui.canvas);
+      const bg = style.backgroundColor;
+      const text = style.color;
+      const m = bg.match(/[\d.]+/g) || ["255", "255", "255"];
+      state.colors = {
+        bg,
+        text,
+        trail: `rgba(${m[0]}, ${m[1]}, ${m[2]}, 0.3)`,
+      };
+    }
 
-            updateCSSVars() {
-                document.documentElement.style.setProperty('--accent', this.state.color);
-                document.documentElement.style.setProperty('--accent-bright', this.state.color);
-                document.documentElement.style.setProperty('--accent-dim', this.state.color + '40');
-            },
+    function resize() {
+      const dpr = window.devicePixelRatio || 1;
+      const w = ui.stage.clientWidth;
+      const h = ui.stage.clientHeight;
+      ui.canvas.width = Math.round(w * dpr);
+      ui.canvas.height = Math.round(h * dpr);
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      ctx.fillStyle = state.colors.bg;
+      ctx.fillRect(0, 0, w, h);
+    }
 
-            toggleTheme() {
-                this.state.theme = this.state.theme === 'dark' ? 'light' : 'dark';
-                this.applyTheme();
-                this.saveSettings();
-            },
+    // Audio: a sine tone through a stereo panner. Created on the first user
+    // gesture that needs it, so the browser lets it play.
 
-            applyTheme() {
-                const btn = document.getElementById('theme-btn');
-                if (this.state.theme === 'light') {
-                    document.body.classList.add('light-mode');
-                    if (btn) btn.innerText = "Design: Hell";
-                } else {
-                    document.body.classList.remove('light-mode');
-                    if (btn) btn.innerText = "Design: Dunkel";
-                }
-            },
+    function ensureAudio() {
+      if (audio.ctx) return;
+      const AC = window.AudioContext || window.webkitAudioContext;
+      if (!AC) return;
+      audio.ctx = new AC();
+      audio.panner = audio.ctx.createStereoPanner();
+      audio.gain = audio.ctx.createGain();
+      audio.gain.gain.value = 0;
+      audio.panner.connect(audio.gain);
+      audio.gain.connect(audio.ctx.destination);
+    }
 
-            // --- Audio System ---
-            initAudioContextPreload() {
-                const AudioContext = window.AudioContext || window.webkitAudioContext;
-                this.audio.ctx = new AudioContext();
-                this.audio.panner = this.audio.ctx.createStereoPanner();
-                this.audio.gain = this.audio.ctx.createGain();
-                this.audio.gain.gain.value = 0.05;
-                this.audio.panner.connect(this.audio.gain);
-                this.audio.gain.connect(this.audio.ctx.destination);
-            },
+    function startTone() {
+      ensureAudio();
+      if (!audio.ctx) return;
+      if (audio.ctx.state === "suspended") audio.ctx.resume();
+      stopTone(true);
+      const t = audio.ctx.currentTime;
+      audio.osc = audio.ctx.createOscillator();
+      audio.osc.type = "sine";
+      audio.osc.frequency.value = TONE_HZ;
+      audio.osc.connect(audio.panner);
+      audio.gain.gain.cancelScheduledValues(t);
+      audio.gain.gain.setValueAtTime(0, t);
+      audio.gain.gain.linearRampToValueAtTime(TONE_GAIN, t + 0.5);
+      audio.osc.start();
+    }
 
-            toggleAudio() {
-                if (!this.audio.ctx) this.initAudioContextPreload();
+    function stopTone(immediate = false) {
+      if (!audio.osc || !audio.ctx) return;
+      const osc = audio.osc;
+      audio.osc = null;
+      const t = audio.ctx.currentTime;
+      const fade = immediate ? 0 : 0.2;
+      audio.gain.gain.cancelScheduledValues(t);
+      audio.gain.gain.setValueAtTime(audio.gain.gain.value, t);
+      audio.gain.gain.linearRampToValueAtTime(0, t + fade);
+      osc.stop(t + fade + 0.05);
+      osc.onended = () => osc.disconnect();
+    }
 
-                if (this.audio.ctx.state === 'suspended') {
-                    this.audio.ctx.resume();
-                }
+    function pan(x) {
+      if (audio.panner) audio.panner.pan.value = x * 0.85;
+    }
 
-                this.state.audioEnabled = !this.state.audioEnabled;
-                const btn = document.getElementById('btn-audio');
-                if (this.state.audioEnabled) {
-                    btn.innerText = "Audio: An";
-                    btn.classList.add('active');
-                } else {
-                    btn.innerText = "Audio: Aus";
-                    btn.classList.remove('active');
-                    this.stopSound();
-                }
-            },
+    // Session
 
-            startSound() {
-                if (!this.state.audioEnabled || !this.audio.ctx) return;
-                this.stopSound();
+    function startSession() {
+      if (state.running) return;
+      state.running = true;
+      state.startedAt = performance.now();
+      ui.stage.hidden = false;
+      readColors();
+      resize();
+      if (state.audio) startTone();
+      state.frame = requestAnimationFrame(loop);
+    }
 
-                this.audio.osc = this.audio.ctx.createOscillator();
-                this.audio.osc.type = 'sine';
-                this.audio.osc.frequency.value = 160;
+    function stopSession() {
+      if (!state.running) return;
+      state.running = false;
+      cancelAnimationFrame(state.frame);
+      stopTone();
+      ui.stage.hidden = true;
+      ui.start.focus();
+    }
 
-                this.audio.gain.gain.cancelScheduledValues(this.audio.ctx.currentTime);
-                this.audio.gain.gain.setValueAtTime(0, this.audio.ctx.currentTime);
-                this.audio.gain.gain.linearRampToValueAtTime(0.15, this.audio.ctx.currentTime + 0.5);
+    function loop(now) {
+      if (!state.running) return;
+      state.frame = requestAnimationFrame(loop);
 
-                this.audio.osc.connect(this.audio.panner);
-                this.audio.osc.start();
-            },
+      const w = ui.stage.clientWidth;
+      const h = ui.stage.clientHeight;
+      const elapsed = (now - state.startedAt) / 1000;
+      const x = Math.sin(2 * Math.PI * state.speed * elapsed);
 
-            stopSound() {
-                if (this.audio.osc) {
-                    const currTime = this.audio.ctx ? this.audio.ctx.currentTime : 0;
-                    try {
-                        this.audio.gain.gain.linearRampToValueAtTime(0, currTime + 0.2);
-                        setTimeout(() => {
-                            if (this.audio.osc) {
-                                this.audio.osc.stop();
-                                this.audio.osc.disconnect();
-                                this.audio.osc = null;
-                            }
-                        }, 250);
-                    } catch (e) {
-                        if (this.audio.osc) this.audio.osc.stop();
-                        this.audio.osc = null;
-                    }
-                }
-            },
+      const padding = w * 0.1;
+      const range = w / 2 - padding;
+      const cx = w / 2 + x * range;
+      const cy = h / 2;
 
-            updateAudioPan(xNorm) {
-                if (this.audio.panner) {
-                    this.audio.panner.pan.value = xNorm * 0.85;
-                }
-            },
+      ctx.fillStyle = state.colors.trail;
+      ctx.fillRect(0, 0, w, h);
+      ctx.beginPath();
+      ctx.arc(cx, cy, state.size / 2, 0, Math.PI * 2);
+      ctx.fillStyle = state.colors.text;
+      ctx.fill();
 
-            // --- Core Loop ---
-            startSession() {
-                if (this.state.isRunning) return;
-                this.state.isRunning = true;
-                this.state.startTime = performance.now();
+      if (state.audio) pan(x);
+    }
 
-                document.getElementById('ui-layer').classList.add('hidden');
-                document.getElementById('canvas-container').style.cursor = 'none';
+    // Grounding: box breathing, four seconds per phase. The circle's scale is a
+    // CSS transition; this only flips the class and the word on phase change.
 
-                document.querySelector('.shortcuts').style.opacity = '0.3';
+    const BREATH = [
+      ["Breathe in", true],
+      ["Hold", true],
+      ["Breathe out", false],
+      ["Hold", false],
+    ];
+    let breathTimer = 0;
+    let breathPhase = 0;
 
-                if (this.state.audioEnabled) this.startSound();
-            },
+    function startGrounding() {
+      if (state.grounding) return;
+      state.grounding = true;
+      stopSession();
+      ui.grounding.hidden = false;
+      breathPhase = 0;
+      applyBreath();
+      breathTimer = setInterval(() => {
+        breathPhase = (breathPhase + 1) % BREATH.length;
+        applyBreath();
+      }, BREATH_PHASE_MS);
+      ui.back.focus();
+    }
 
-            stopSession() {
-                this.state.isRunning = false;
-                document.getElementById('ui-layer').classList.remove('hidden');
-                document.getElementById('canvas-container').style.cursor = 'default';
-                document.querySelector('.shortcuts').style.opacity = '0.6';
-                this.stopSound();
-                this.ctx.clearRect(0, 0, this.state.width, this.state.height);
-            },
+    function applyBreath() {
+      const [word, grown] = BREATH[breathPhase];
+      ui.breathWord.textContent = word;
+      ui.breath.classList.toggle("in", grown);
+    }
 
-            triggerGrounding() {
-                this.state.isGrounding = true;
-                this.state.isRunning = false;
-                this.stopSound();
+    function stopGrounding() {
+      if (!state.grounding) return;
+      state.grounding = false;
+      clearInterval(breathTimer);
+      ui.grounding.hidden = true;
+      ui.breath.classList.remove("in");
+      ui.start.focus();
+    }
 
-                document.getElementById('grounding-overlay').classList.add('active');
-                document.getElementById('ui-layer').classList.add('hidden');
-            },
+    function toggleFullscreen() {
+      if (document.fullscreenElement) {
+        document.exitFullscreen?.();
+      } else {
+        document.documentElement.requestFullscreen?.();
+      }
+    }
 
-            resetFromGrounding() {
-                this.state.isGrounding = false;
-                document.getElementById('grounding-overlay').classList.remove('active');
-                document.getElementById('ui-layer').classList.remove('hidden');
-                this.ctx.clearRect(0, 0, this.state.width, this.state.height);
-            },
+    // Events
 
-            loop(timestamp) {
-                requestAnimationFrame((t) => this.loop(t));
+    ui.speed.addEventListener("input", () => {
+      state.speed = parseFloat(ui.speed.value);
+      render();
+      save();
+    });
+    ui.size.addEventListener("input", () => {
+      state.size = parseInt(ui.size.value, 10);
+      render();
+      save();
+    });
+    ui.audio.addEventListener("change", () => {
+      state.audio = ui.audio.checked;
+      save();
+      if (state.running) state.audio ? startTone() : stopTone();
+    });
 
-                if (!this.state.isRunning || this.state.isGrounding) {
-                    if (!this.state.isRunning && !this.state.isGrounding) {
-                        this.ctx.clearRect(0, 0, this.state.width, this.state.height);
-                    }
-                    return;
-                }
+    ui.start.addEventListener("click", startSession);
+    ui.ground.addEventListener("click", startGrounding);
+    ui.stageGround.addEventListener("click", startGrounding);
+    ui.stageStop.addEventListener("click", stopSession);
+    ui.back.addEventListener("click", stopGrounding);
 
-                if (this.state.theme === 'light') {
-                    this.ctx.fillStyle = 'rgba(240, 242, 245, 0.25)';
-                } else {
-                    this.ctx.fillStyle = 'rgba(5, 5, 5, 0.25)';
-                }
-                this.ctx.fillRect(0, 0, this.state.width, this.state.height);
+    window.addEventListener("keydown", (e) => {
+      const inField = /^(INPUT|TEXTAREA|SELECT|BUTTON)$/.test(e.target.tagName);
+      if (e.code === "Space") {
+        if (state.grounding) return;
+        if (!state.running && inField) return;
+        e.preventDefault();
+        startGrounding();
+      } else if (e.code === "Escape") {
+        if (state.grounding) stopGrounding();
+        else if (state.running) stopSession();
+      } else if (e.code === "KeyF" && (state.running || !inField)) {
+        e.preventDefault();
+        toggleFullscreen();
+      }
+    });
 
-                const elapsed = (timestamp - this.state.startTime) / 1000;
-                const xRaw = Math.sin(2 * Math.PI * this.state.speed * elapsed);
+    window.addEventListener("resize", () => {
+      if (state.running) resize();
+    });
 
-                const padding = this.state.width * 0.1;
-                const range = (this.state.width / 2) - padding;
-                const centerX = this.state.width / 2;
+    window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => {
+      if (state.running) {
+        readColors();
+        resize();
+      }
+    });
 
-                const x = centerX + (xRaw * range);
-                const y = this.state.height / 2;
-
-                this.ctx.beginPath();
-                this.ctx.arc(x, y, this.state.size / 2, 0, Math.PI * 2);
-                this.ctx.fillStyle = this.state.color;
-
-                this.ctx.shadowBlur = this.state.theme === 'light' ? 15 : 25;
-                this.ctx.shadowColor = this.state.color;
-
-                this.ctx.fill();
-                this.ctx.shadowBlur = 0;
-
-                if (this.state.audioEnabled) {
-                    this.updateAudioPan(xRaw);
-                }
-            },
-
-            toggleFullscreen() {
-                if (!document.fullscreenElement) {
-                    document.documentElement.requestFullscreen();
-                } else {
-                    if (document.exitFullscreen) document.exitFullscreen();
-                }
-            },
-
-            updateUI() {
-                document.getElementById('val-speed').innerText = this.state.speed + " Hz";
-                document.getElementById('val-size').innerText = this.state.size + " px";
-                this.saveSettings();
-            },
-
-            bindEvents() {
-                document.getElementById('inp-speed').addEventListener('input', (e) => {
-                    this.state.speed = parseFloat(e.target.value);
-                    this.updateUI();
-                });
-                document.getElementById('inp-size').addEventListener('input', (e) => {
-                    this.state.size = parseInt(e.target.value);
-                    this.updateUI();
-                });
-                document.getElementById('inp-color').addEventListener('input', (e) => {
-                    this.state.color = e.target.value;
-                    this.updateCSSVars();
-                    this.saveSettings();
-                });
-
-                document.getElementById('btn-audio').addEventListener('click', () => this.toggleAudio());
-                document.getElementById('btn-start').addEventListener('click', () => this.startSession());
-                document.getElementById('btn-fullscreen').addEventListener('click', () => this.toggleFullscreen());
-                document.getElementById('btn-panic').addEventListener('click', () => this.triggerGrounding());
-                document.getElementById('theme-btn').addEventListener('click', () => this.toggleTheme());
-
-                window.addEventListener('keydown', (e) => {
-                    if (e.code === 'Space') {
-                        if (this.state.isGrounding) return;
-                        e.preventDefault();
-                        this.triggerGrounding();
-                    }
-                    if (e.code === 'KeyH') {
-                        document.getElementById('ui-layer').classList.toggle('hidden');
-                    }
-                    if (e.code === 'KeyF') {
-                        this.toggleFullscreen();
-                    }
-                    if (e.code === 'Escape') {
-                        if (this.state.isRunning) this.stopSession();
-                    }
-                });
-            }
-        };
-
-        window.onload = () => app.init();
-
-    </script>
+    load();
+  </script>
 </body>
-
 </html>
