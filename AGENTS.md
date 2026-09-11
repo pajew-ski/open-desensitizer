@@ -7,6 +7,7 @@ Target audience: someone who wants to calm down or process something on their ow
 ## Non-Goals
 
 - No framework, no build tool, no bundler, no package manager
+- No second file. The app is `index.html` alone; stylesheet and script are inline so one file can be copied anywhere and run
 - No external resource of any kind: no CDN, no web font, no analytics
 - No accounts, no network requests, no data leaving the page
 - No manual dark/light toggle. Automatic only, via `prefers-color-scheme`
@@ -20,16 +21,14 @@ Target audience: someone who wants to calm down or process something on their ow
 ├── AGENTS.md
 ├── README.md            (short: what this is, link to the Pages site)
 ├── LICENSE              (Unlicense)
-├── index.html           (the page: explanation, settings, session and grounding overlays)
-├── style.css            (design tokens shared with temet-nosce and open-entrainer, plus app rules)
-└── app.js               (session loop, audio, grounding, settings persistence)
+└── index.html           (the whole app: page, stylesheet and script in one file)
 ```
 
 GitHub Pages deploys from the root of `main`. The footer derives its GitHub links from the Pages URL, so a fork needs no edit.
 
 ## Design
 
-The stylesheet begins with the token block from temet-nosce, verbatim. It stays verbatim in all three projects; a change to the tokens is a change to all three.
+The inline stylesheet begins with the token block from temet-nosce, verbatim. It stays verbatim in all three projects; a change to the tokens is a change to all three.
 
 - Color: oklch with chroma 0. Light: bg 98%, surface 94%, border 85%, text 15%, muted 40%. Dark flips the scale under `prefers-color-scheme: dark`. `color-scheme: light dark` on the root so form controls follow.
 - Spacing: Fibonacci in pixels, 5 8 13 21 34 55 89 144, as `--space-1` to `--space-8`.
@@ -56,12 +55,10 @@ English throughout. Plain sentences, present tense, no exclamation marks, no emo
 
 ### `index.html`
 
-Hero with the project name and one sentence. Sections: How it works, Before you start, Session. Footer with the AGENTS.md and source links and the module that rewrites them from the Pages URL. Two overlays after the footer, both `hidden` by default: `#stage` with the canvas and a corner bar, `#grounding` with the breathing circle, the line, and the Return button.
+One file with three parts: the `<style>` block in the head, the markup, and one `<script type="module">` at the end of the body (plus the small footer module before it).
 
-### `style.css`
+Markup: hero with the project name and one sentence. Sections: How it works, Before you start, Session. Footer with the AGENTS.md and source links and the module that rewrites them from the Pages URL. Two overlays after the footer, both `hidden` by default: `#stage` with the canvas and a corner bar, `#grounding` with the breathing circle, the line, and the Return button.
 
-Token block, base rules (hero, sections, controls, buttons, footer), then the stage and grounding rules. `[hidden] { display: none !important }` so the overlays' flex display does not defeat the attribute.
+Style block: token block, base rules (hero, sections, controls, buttons, footer), then the stage and grounding rules. `[hidden] { display: none !important }` so the overlays' flex display does not defeat the attribute.
 
-### `app.js`
-
-An ES module. No globals beyond what the DOM gives. Functions: load, save, render, readColors, resize, ensureAudio, startTone, stopTone, pan, startSession, stopSession, loop, startGrounding, applyBreath, stopGrounding, toggleFullscreen, and the event wiring at the bottom.
+Script block: an ES module. No globals beyond what the DOM gives. Functions: load, save, render, readColors, resize, ensureAudio, startTone, stopTone, pan, startSession, stopSession, loop, startGrounding, applyBreath, stopGrounding, toggleFullscreen, and the event wiring at the bottom.

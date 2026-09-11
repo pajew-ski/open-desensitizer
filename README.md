@@ -1,6 +1,6 @@
 # open desensitizer
 
-Bilateral stimulation in the browser. A dot moves from side to side, an optional tone follows it between the ears, and a grounding exercise is one key away. One HTML file, one stylesheet, one script, nothing else.
+Bilateral stimulation in the browser. A dot moves from side to side, an optional tone follows it between the ears, and a grounding exercise is one key away. One HTML file with everything in it, nothing else.
 
 **Site**: [pajew-ski.github.io/open-desensitizer](https://pajew-ski.github.io/open-desensitizer/)
 
@@ -32,7 +32,7 @@ cd open-desensitizer
 open index.html
 ```
 
-There is no build step and no dependency. Any static host serves it as is; on GitHub Pages, deploy from the root of `main`. The footer links adapt to a fork automatically.
+The whole app is `index.html`; copy that one file anywhere and it runs. There is no build step and no dependency. Any static host serves it as is; on GitHub Pages, deploy from the root of `main`. The footer links adapt to a fork automatically.
 
 Everything here was built by a coding agent from [AGENTS.md](AGENTS.md), which is the design and behavior spec of the tool.
 

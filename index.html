@@ -6,7 +6,384 @@
   <title>open desensitizer</title>
   <meta name="description" content="Bilateral stimulation in the browser: a dot that moves from side to side, an optional tone that follows it, and a grounding exercise one key away.">
   <link rel="icon" href="data:,">
-  <link rel="stylesheet" href="style.css">
+  <style>
+    /* Design tokens, shared with temet-nosce.
+       Color is strictly achromatic: oklch with chroma 0 cannot tint, light and
+       dark share one scale and flip with prefers-color-scheme. Geometry derives
+       from φ: the spacing ladder is the Fibonacci sequence, the type scale is
+       powers of φ. */
+
+    :root {
+      color-scheme: light dark;
+      --bg: oklch(98% 0 0);
+      --surface: oklch(94% 0 0);
+      --border: oklch(85% 0 0);
+      --text: oklch(15% 0 0);
+      --text-muted: oklch(40% 0 0);
+
+      --space-1: 5px;
+      --space-2: 8px;
+      --space-3: 13px;
+      --space-4: 21px;
+      --space-5: 34px;
+      --space-6: 55px;
+      --space-7: 89px;
+      --space-8: 144px;
+      --radius-sm: var(--space-1);
+      --radius-md: var(--space-2);
+      --radius-lg: var(--space-3);
+
+      --text-sm: 0.875rem;     /* 14px, captions; deliberately not 1/φ, legibility floor */
+      --text-base: 1rem;       /* browser default, respects user zoom */
+      --text-lg: 1.618rem;     /* φ¹ */
+      --text-xl: 2.618rem;     /* φ² */
+      --text-2xl: 4.236rem;    /* φ³ */
+
+      font-family: system-ui, sans-serif;
+      font-size: var(--text-base);
+      line-height: 1.618;
+      background: var(--bg);
+      color: var(--text);
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: oklch(15% 0 0);
+        --surface: oklch(20% 0 0);
+        --border: oklch(30% 0 0);
+        --text: oklch(95% 0 0);
+        --text-muted: oklch(70% 0 0);
+      }
+    }
+
+    body {
+      margin: 0;
+    }
+
+    [hidden] {
+      display: none !important;
+    }
+
+    .shell {
+      max-width: 987px;
+      margin: 0 auto;
+      padding: 0 var(--space-4);
+    }
+
+    a {
+      color: inherit;
+      text-underline-offset: 3px;
+    }
+
+    :focus-visible {
+      outline: 2px solid var(--text-muted);
+      outline-offset: 2px;
+    }
+
+    /* Hero */
+
+    .hero {
+      padding-block: var(--space-8) var(--space-6);
+    }
+
+    .hero h1 {
+      margin: 0;
+      font-size: clamp(var(--text-xl), 9vw, var(--text-2xl));
+      font-weight: 600;
+      letter-spacing: -0.02em;
+      line-height: 1;
+    }
+
+    .hero p {
+      margin: var(--space-4) 0 0;
+      max-width: 34rem;
+      color: var(--text-muted);
+    }
+
+    /* Sections */
+
+    main section {
+      margin: 0 0 var(--space-7);
+    }
+
+    main h2 {
+      margin: 0 0 var(--space-4);
+      font-size: var(--text-lg);
+      font-weight: 600;
+      line-height: 1.2;
+    }
+
+    main h3 {
+      margin: 0 0 var(--space-2);
+      font-size: var(--text-sm);
+      font-weight: 400;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    main section > p,
+    main section > ul {
+      margin: 0 0 var(--space-3);
+      max-width: 42rem;
+    }
+
+    main section > ul {
+      padding-left: var(--space-4);
+    }
+
+    main section > ul li {
+      margin-bottom: var(--space-1);
+    }
+
+    .caption {
+      color: var(--text-muted);
+      font-size: var(--text-sm);
+    }
+
+    table {
+      border-collapse: collapse;
+      font-size: var(--text-sm);
+      margin: 0 0 var(--space-3);
+    }
+
+    th,
+    td {
+      text-align: left;
+      padding: var(--space-1) var(--space-4) var(--space-1) 0;
+      border-bottom: 1px solid var(--border);
+      vertical-align: top;
+    }
+
+    th {
+      font-weight: 600;
+    }
+
+    /* Controls: a labelled slider or field. The label row carries the name on the
+       left and the live value on the right. */
+
+    .controls {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(233px, 1fr));
+      gap: var(--space-4) var(--space-5);
+      max-width: 42rem;
+      margin: 0 0 var(--space-4);
+    }
+
+    .control {
+      display: block;
+    }
+
+    .control-label {
+      display: flex;
+      justify-content: space-between;
+      gap: var(--space-3);
+      font-size: var(--text-sm);
+      margin-bottom: var(--space-1);
+    }
+
+    .control-label output {
+      color: var(--text-muted);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .control-check {
+      display: flex;
+      align-items: center;
+      gap: var(--space-2);
+      font-size: var(--text-sm);
+    }
+
+    input[type="range"],
+    input[type="checkbox"] {
+      accent-color: var(--text);
+    }
+
+    input[type="range"] {
+      display: block;
+      width: 100%;
+      margin: 0;
+    }
+
+    input[type="checkbox"] {
+      width: 1rem;
+      height: 1rem;
+      margin: 0;
+    }
+
+    input[type="number"],
+    input[type="time"] {
+      font: inherit;
+      font-size: var(--text-sm);
+      font-variant-numeric: tabular-nums;
+      color: var(--text);
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: var(--space-1) var(--space-2);
+      width: 100%;
+      box-sizing: border-box;
+    }
+
+    input[type="number"]:focus-visible,
+    input[type="time"]:focus-visible {
+      outline-offset: 0;
+    }
+
+    /* Buttons. The primary button is inverted like a user message in temet-nosce:
+       text-colored surface, background-colored label. */
+
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--space-2);
+      margin: 0 0 var(--space-3);
+    }
+
+    .button {
+      font: inherit;
+      font-size: var(--text-sm);
+      color: var(--text);
+      background: none;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: var(--space-2) var(--space-4);
+      cursor: pointer;
+    }
+
+    .button:hover {
+      background: var(--surface);
+    }
+
+    .button:disabled {
+      color: var(--text-muted);
+      cursor: default;
+      background: none;
+    }
+
+    .button.primary {
+      color: var(--bg);
+      background: var(--text);
+      border-color: var(--text);
+    }
+
+    .button.primary:hover {
+      background: var(--text-muted);
+      border-color: var(--text-muted);
+    }
+
+    .button.primary:disabled {
+      background: var(--border);
+      border-color: var(--border);
+      color: var(--text-muted);
+    }
+
+    /* Footer */
+
+    footer {
+      border-top: 1px solid var(--border);
+      padding: var(--space-5) 0 var(--space-6);
+      color: var(--text-muted);
+      font-size: var(--text-sm);
+    }
+
+    @media (max-width: 800px) {
+      .hero {
+        padding-block-start: var(--space-7);
+      }
+    }
+
+    /* Session stage: covers the page while the dot runs. The canvas carries the
+       page tokens as its own colors so the script can read resolved values from it
+       (canvas fillStyle wants a concrete color, and the tokens are oklch). */
+
+    .stage {
+      position: fixed;
+      inset: 0;
+      z-index: 10;
+      background: var(--bg);
+      cursor: none;
+    }
+
+    .stage canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+      background: var(--bg);
+      color: var(--text);
+    }
+
+    .stage-bar {
+      position: absolute;
+      right: var(--space-4);
+      bottom: var(--space-4);
+      display: flex;
+      gap: var(--space-2);
+      opacity: 0.4;
+      transition: opacity 0.3s;
+      cursor: default;
+    }
+
+    .stage-bar:hover,
+    .stage-bar:focus-within {
+      opacity: 1;
+    }
+
+    .stage-bar .button {
+      background: var(--bg);
+    }
+
+    /* Grounding: the page inverted. Text becomes ground, ground becomes text, the
+       same inversion as the primary button. A circle grows and shrinks in a four
+       second box: in, hold, out, hold. */
+
+    .grounding {
+      position: fixed;
+      inset: 0;
+      z-index: 20;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: var(--space-5);
+      padding: var(--space-4);
+      background: var(--text);
+      color: var(--bg);
+      text-align: center;
+    }
+
+    .breath {
+      width: var(--space-8);
+      height: var(--space-8);
+      margin: var(--space-6);
+      border-radius: 50%;
+      border: 1px solid currentColor;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: var(--text-sm);
+      transform: scale(1);
+      transition: transform 4s ease-in-out;
+    }
+
+    .breath.in {
+      transform: scale(1.618);
+    }
+
+    .grounding p {
+      margin: 0;
+      max-width: 34rem;
+    }
+
+    .button.inverted {
+      color: var(--bg);
+      border-color: var(--bg);
+    }
+
+    .button.inverted:hover {
+      background: var(--text-muted);
+    }
+  </style>
 </head>
 <body>
   <header class="hero shell">
@@ -92,6 +469,305 @@
       document.querySelector("#agents-link").href = `${base}/blob/main/AGENTS.md`;
     }
   </script>
-  <script type="module" src="app.js"></script>
+  <script type="module">
+    // open desensitizer
+    // One file, no dependencies. The page is a document; the session is an
+    // overlay on top of it. The dot follows a sine wave, the optional tone pans
+    // with it, and Space at any time replaces both with a breathing exercise.
+
+    const STORAGE_KEY = "open-desensitizer";
+    const TONE_HZ = 160;
+    const TONE_GAIN = 0.15;
+    const BREATH_PHASE_MS = 4000;
+
+    const $ = (id) => document.getElementById(id);
+
+    const ui = {
+      speed: $("inp-speed"),
+      size: $("inp-size"),
+      audio: $("inp-audio"),
+      valSpeed: $("val-speed"),
+      valSize: $("val-size"),
+      start: $("btn-start"),
+      ground: $("btn-ground"),
+      stage: $("stage"),
+      canvas: $("canvas"),
+      stageGround: $("btn-stage-ground"),
+      stageStop: $("btn-stage-stop"),
+      grounding: $("grounding"),
+      breath: $("breath"),
+      breathWord: $("breath-word"),
+      back: $("btn-return"),
+    };
+
+    const state = {
+      speed: 0.5,
+      size: 30,
+      audio: false,
+      running: false,
+      grounding: false,
+      startedAt: 0,
+      frame: 0,
+      colors: { bg: "#fff", text: "#000", trail: "rgba(255,255,255,0.3)" },
+    };
+
+    const audio = { ctx: null, panner: null, gain: null, osc: null };
+    const ctx = ui.canvas.getContext("2d");
+
+    // Settings
+
+    function load() {
+      try {
+        const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}");
+        if (typeof saved.speed === "number") state.speed = saved.speed;
+        if (typeof saved.size === "number") state.size = saved.size;
+        if (typeof saved.audio === "boolean") state.audio = saved.audio;
+      } catch {
+        // Storage may be unavailable; defaults are fine.
+      }
+      ui.speed.value = state.speed;
+      ui.size.value = state.size;
+      ui.audio.checked = state.audio;
+      render();
+    }
+
+    function save() {
+      try {
+        localStorage.setItem(
+          STORAGE_KEY,
+          JSON.stringify({ speed: state.speed, size: state.size, audio: state.audio }),
+        );
+      } catch {
+        // Ignore; the session works without persistence.
+      }
+    }
+
+    function render() {
+      ui.valSpeed.textContent = `${state.speed.toFixed(2)} Hz`;
+      ui.valSize.textContent = `${state.size} px`;
+    }
+
+    // Colors: the tokens are oklch; the canvas gets the resolved values from its
+    // own computed style so it follows the color scheme without a second palette.
+
+    function readColors() {
+      const style = getComputedStyle(ui.canvas);
+      const bg = style.backgroundColor;
+      const text = style.color;
+      const m = bg.match(/[\d.]+/g) || ["255", "255", "255"];
+      state.colors = {
+        bg,
+        text,
+        trail: `rgba(${m[0]}, ${m[1]}, ${m[2]}, 0.3)`,
+      };
+    }
+
+    function resize() {
+      const dpr = window.devicePixelRatio || 1;
+      const w = ui.stage.clientWidth;
+      const h = ui.stage.clientHeight;
+      ui.canvas.width = Math.round(w * dpr);
+      ui.canvas.height = Math.round(h * dpr);
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      ctx.fillStyle = state.colors.bg;
+      ctx.fillRect(0, 0, w, h);
+    }
+
+    // Audio: a sine tone through a stereo panner. Created on the first user
+    // gesture that needs it, so the browser lets it play.
+
+    function ensureAudio() {
+      if (audio.ctx) return;
+      const AC = window.AudioContext || window.webkitAudioContext;
+      if (!AC) return;
+      audio.ctx = new AC();
+      audio.panner = audio.ctx.createStereoPanner();
+      audio.gain = audio.ctx.createGain();
+      audio.gain.gain.value = 0;
+      audio.panner.connect(audio.gain);
+      audio.gain.connect(audio.ctx.destination);
+    }
+
+    function startTone() {
+      ensureAudio();
+      if (!audio.ctx) return;
+      if (audio.ctx.state === "suspended") audio.ctx.resume();
+      stopTone(true);
+      const t = audio.ctx.currentTime;
+      audio.osc = audio.ctx.createOscillator();
+      audio.osc.type = "sine";
+      audio.osc.frequency.value = TONE_HZ;
+      audio.osc.connect(audio.panner);
+      audio.gain.gain.cancelScheduledValues(t);
+      audio.gain.gain.setValueAtTime(0, t);
+      audio.gain.gain.linearRampToValueAtTime(TONE_GAIN, t + 0.5);
+      audio.osc.start();
+    }
+
+    function stopTone(immediate = false) {
+      if (!audio.osc || !audio.ctx) return;
+      const osc = audio.osc;
+      audio.osc = null;
+      const t = audio.ctx.currentTime;
+      const fade = immediate ? 0 : 0.2;
+      audio.gain.gain.cancelScheduledValues(t);
+      audio.gain.gain.setValueAtTime(audio.gain.gain.value, t);
+      audio.gain.gain.linearRampToValueAtTime(0, t + fade);
+      osc.stop(t + fade + 0.05);
+      osc.onended = () => osc.disconnect();
+    }
+
+    function pan(x) {
+      if (audio.panner) audio.panner.pan.value = x * 0.85;
+    }
+
+    // Session
+
+    function startSession() {
+      if (state.running) return;
+      state.running = true;
+      state.startedAt = performance.now();
+      ui.stage.hidden = false;
+      readColors();
+      resize();
+      if (state.audio) startTone();
+      state.frame = requestAnimationFrame(loop);
+    }
+
+    function stopSession() {
+      if (!state.running) return;
+      state.running = false;
+      cancelAnimationFrame(state.frame);
+      stopTone();
+      ui.stage.hidden = true;
+      ui.start.focus();
+    }
+
+    function loop(now) {
+      if (!state.running) return;
+      state.frame = requestAnimationFrame(loop);
+
+      const w = ui.stage.clientWidth;
+      const h = ui.stage.clientHeight;
+      const elapsed = (now - state.startedAt) / 1000;
+      const x = Math.sin(2 * Math.PI * state.speed * elapsed);
+
+      const padding = w * 0.1;
+      const range = w / 2 - padding;
+      const cx = w / 2 + x * range;
+      const cy = h / 2;
+
+      ctx.fillStyle = state.colors.trail;
+      ctx.fillRect(0, 0, w, h);
+      ctx.beginPath();
+      ctx.arc(cx, cy, state.size / 2, 0, Math.PI * 2);
+      ctx.fillStyle = state.colors.text;
+      ctx.fill();
+
+      if (state.audio) pan(x);
+    }
+
+    // Grounding: box breathing, four seconds per phase. The circle's scale is a
+    // CSS transition; this only flips the class and the word on phase change.
+
+    const BREATH = [
+      ["Breathe in", true],
+      ["Hold", true],
+      ["Breathe out", false],
+      ["Hold", false],
+    ];
+    let breathTimer = 0;
+    let breathPhase = 0;
+
+    function startGrounding() {
+      if (state.grounding) return;
+      state.grounding = true;
+      stopSession();
+      ui.grounding.hidden = false;
+      breathPhase = 0;
+      applyBreath();
+      breathTimer = setInterval(() => {
+        breathPhase = (breathPhase + 1) % BREATH.length;
+        applyBreath();
+      }, BREATH_PHASE_MS);
+      ui.back.focus();
+    }
+
+    function applyBreath() {
+      const [word, grown] = BREATH[breathPhase];
+      ui.breathWord.textContent = word;
+      ui.breath.classList.toggle("in", grown);
+    }
+
+    function stopGrounding() {
+      if (!state.grounding) return;
+      state.grounding = false;
+      clearInterval(breathTimer);
+      ui.grounding.hidden = true;
+      ui.breath.classList.remove("in");
+      ui.start.focus();
+    }
+
+    function toggleFullscreen() {
+      if (document.fullscreenElement) {
+        document.exitFullscreen?.();
+      } else {
+        document.documentElement.requestFullscreen?.();
+      }
+    }
+
+    // Events
+
+    ui.speed.addEventListener("input", () => {
+      state.speed = parseFloat(ui.speed.value);
+      render();
+      save();
+    });
+    ui.size.addEventListener("input", () => {
+      state.size = parseInt(ui.size.value, 10);
+      render();
+      save();
+    });
+    ui.audio.addEventListener("change", () => {
+      state.audio = ui.audio.checked;
+      save();
+      if (state.running) state.audio ? startTone() : stopTone();
+    });
+
+    ui.start.addEventListener("click", startSession);
+    ui.ground.addEventListener("click", startGrounding);
+    ui.stageGround.addEventListener("click", startGrounding);
+    ui.stageStop.addEventListener("click", stopSession);
+    ui.back.addEventListener("click", stopGrounding);
+
+    window.addEventListener("keydown", (e) => {
+      const inField = /^(INPUT|TEXTAREA|SELECT|BUTTON)$/.test(e.target.tagName);
+      if (e.code === "Space") {
+        if (state.grounding) return;
+        if (!state.running && inField) return;
+        e.preventDefault();
+        startGrounding();
+      } else if (e.code === "Escape") {
+        if (state.grounding) stopGrounding();
+        else if (state.running) stopSession();
+      } else if (e.code === "KeyF" && (state.running || !inField)) {
+        e.preventDefault();
+        toggleFullscreen();
+      }
+    });
+
+    window.addEventListener("resize", () => {
+      if (state.running) resize();
+    });
+
+    window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => {
+      if (state.running) {
+        readColors();
+        resize();
+      }
+    });
+
+    load();
+  </script>
 </body>
 </html>
