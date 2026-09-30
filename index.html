@@ -6,6 +6,16 @@
   <title>open desensitizer</title>
   <meta name="description" content="Bilateral stimulation in the browser: a dot that moves from side to side, an optional tone that follows it, and a grounding exercise one key away.">
   <link rel="icon" href="data:,">
+  <script>
+    // Language: both variants ship in this file. German when the browser's first
+    // language is German, English otherwise; ?lang=de or ?lang=en overrides.
+    // Runs before the first paint so the other variant never flashes.
+    {
+      const asked = new URLSearchParams(location.search).get("lang");
+      const first = (navigator.languages && navigator.languages[0]) || navigator.language || "en";
+      document.documentElement.lang = asked === "de" || asked === "en" ? asked : /^de\b/i.test(first) ? "de" : "en";
+    }
+  </script>
   <style>
     /* Design tokens, shared with temet-nosce.
        Color is strictly achromatic: oklch with chroma 0 cannot tint, light and
@@ -61,6 +71,14 @@
     }
 
     [hidden] {
+      display: none !important;
+    }
+
+    /* Every translated element carries its own lang; the one that does not
+       match the root is hidden. */
+
+    html[lang="de"] [lang="en"],
+    html[lang="en"] [lang="de"] {
       display: none !important;
     }
 
@@ -388,71 +406,82 @@
 <body>
   <header class="hero shell">
     <h1>open desensitizer</h1>
-    <p>A dot moves from left to right. Your eyes follow it. That is the whole tool.</p>
+    <p lang="en">A dot moves from left to right. Your eyes follow it. That is the whole tool.</p>
+    <p lang="de">Ein Punkt wandert von links nach rechts. Die Augen folgen ihm. Das ist das ganze Werkzeug.</p>
   </header>
 
   <main class="shell">
     <section id="how">
-      <h2>How it works</h2>
-      <p>Bilateral stimulation alternates a stimulus between the left and the right side: here a point that the eyes track across the screen, and optionally a tone that moves between the ears in step with it. The eye movement resembles the rapid eye movement of dreaming sleep, and the same left-right alternation is the mechanical part of EMDR therapy.</p>
-      <p>Used on its own, it tends to settle the nervous system. Used while holding a difficult memory or feeling in mind, it can make that memory easier to carry. Sessions are short; ten to fifteen minutes is plenty.</p>
-      <p>Everything runs in this page. Nothing is sent anywhere, and the settings stay in your browser.</p>
+      <h2><span lang="en">How it works</span><span lang="de">Wie es funktioniert</span></h2>
+      <p lang="en">Bilateral stimulation alternates a stimulus between the left and the right side: here a point that the eyes track across the screen, and optionally a tone that moves between the ears in step with it. The eye movement resembles the rapid eye movement of dreaming sleep, and the same left-right alternation is the mechanical part of EMDR therapy.</p>
+      <p lang="de">Bilaterale Stimulation wechselt einen Reiz zwischen linker und rechter Seite ab: hier ein Punkt, dem die Augen über den Bildschirm folgen, und auf Wunsch ein Ton, der im gleichen Takt zwischen den Ohren wandert. Die Augenbewegung ähnelt den schnellen Augenbewegungen im Traumschlaf, und derselbe Links-rechts-Wechsel ist der mechanische Teil der EMDR-Therapie.</p>
+      <p lang="en">Used on its own, it tends to settle the nervous system. Used while holding a difficult memory or feeling in mind, it can make that memory easier to carry. Sessions are short; ten to fifteen minutes is plenty.</p>
+      <p lang="de">Für sich genommen beruhigt sie meist das Nervensystem. Während man eine schwierige Erinnerung oder ein schwieriges Gefühl im Sinn hält, kann sie diese Erinnerung leichter tragbar machen. Sitzungen sind kurz; zehn bis fünfzehn Minuten reichen.</p>
+      <p lang="en">Everything runs in this page. Nothing is sent anywhere, and the settings stay in your browser.</p>
+      <p lang="de">Alles läuft in dieser Seite. Nichts wird irgendwohin gesendet, und die Einstellungen bleiben im Browser.</p>
     </section>
 
     <section id="before">
-      <h2>Before you start</h2>
-      <ul>
+      <h2><span lang="en">Before you start</span><span lang="de">Vor dem Start</span></h2>
+      <ul lang="en">
         <li>This is a self-help tool, not therapy. It does not replace treatment for trauma.</li>
         <li>Do not use it with photosensitive epilepsy. With a dissociative disorder, ask a clinician first.</li>
         <li>Sit comfortably, keep your head still, and move only your eyes. Use headphones if you turn the tone on.</li>
         <li>If a session becomes too intense, press Space. The movement stops and a breathing exercise takes over.</li>
       </ul>
+      <ul lang="de">
+        <li>Dies ist ein Werkzeug zur Selbsthilfe, keine Therapie. Es ersetzt keine Traumabehandlung.</li>
+        <li>Nicht bei fotosensitiver Epilepsie benutzen. Bei einer dissoziativen Störung vorher ärztlich abklären.</li>
+        <li>Bequem sitzen, den Kopf ruhig halten und nur die Augen bewegen. Kopfhörer benutzen, wenn der Ton an ist.</li>
+        <li>Wird eine Sitzung zu intensiv, die Leertaste drücken. Die Bewegung stoppt, und eine Atemübung übernimmt.</li>
+      </ul>
     </section>
 
     <section id="session">
-      <h2>Session</h2>
+      <h2><span lang="en">Session</span><span lang="de">Sitzung</span></h2>
       <div class="controls">
         <label class="control">
-          <span class="control-label"><span>Speed</span><output id="val-speed">0.5 Hz</output></span>
+          <span class="control-label"><span><span lang="en">Speed</span><span lang="de">Tempo</span></span><output id="val-speed">0.5 Hz</output></span>
           <input type="range" id="inp-speed" min="0.1" max="2.5" step="0.05" value="0.5">
         </label>
         <label class="control">
-          <span class="control-label"><span>Dot size</span><output id="val-size">30 px</output></span>
+          <span class="control-label"><span><span lang="en">Dot size</span><span lang="de">Punktgröße</span></span><output id="val-size">30 px</output></span>
           <input type="range" id="inp-size" min="10" max="100" step="1" value="30">
         </label>
         <label class="control control-check">
           <input type="checkbox" id="inp-audio">
-          <span>Tone that follows the dot</span>
+          <span lang="en">Tone that follows the dot</span><span lang="de">Ton, der dem Punkt folgt</span>
         </label>
       </div>
       <div class="actions">
-        <button type="button" id="btn-start" class="button primary">Start session</button>
-        <button type="button" id="btn-ground" class="button">Grounding exercise</button>
+        <button type="button" id="btn-start" class="button primary"><span lang="en">Start session</span><span lang="de">Sitzung starten</span></button>
+        <button type="button" id="btn-ground" class="button"><span lang="en">Grounding exercise</span><span lang="de">Erdungsübung</span></button>
       </div>
-      <p class="caption">During a session: Space for grounding, Esc to stop, F for fullscreen. One full cycle per second is 1 Hz; most people settle between 0.5 and 1 Hz.</p>
+      <p class="caption" lang="en">During a session: Space for grounding, Esc to stop, F for fullscreen. One full cycle per second is 1 Hz; most people settle between 0.5 and 1 Hz.</p>
+      <p class="caption" lang="de">Während einer Sitzung: Leertaste für die Erdung, Esc zum Beenden, F für Vollbild. Ein voller Zyklus pro Sekunde ist 1 Hz; die meisten finden sich zwischen 0,5 und 1 Hz ein.</p>
     </section>
   </main>
 
   <footer>
     <div class="shell">
-      open desensitizer · built from <a id="agents-link" href="https://github.com/pajew-ski/open-desensitizer/blob/main/AGENTS.md">AGENTS.md</a> by a coding agent · <a id="source-link" href="https://github.com/pajew-ski/open-desensitizer">source on GitHub</a>
+      open desensitizer · <span lang="en">built from</span><span lang="de">gebaut aus</span> <a id="agents-link" href="https://github.com/pajew-ski/open-desensitizer/blob/main/AGENTS.md">AGENTS.md</a> <span lang="en">by a coding agent</span><span lang="de">von einem Coding-Agenten</span> · <a id="source-link" href="https://github.com/pajew-ski/open-desensitizer"><span lang="en">source on GitHub</span><span lang="de">Quelltext auf GitHub</span></a>
     </div>
   </footer>
 
   <!-- Session: a canvas that covers the page while the dot runs. -->
   <div id="stage" class="stage" hidden>
-    <canvas id="canvas" aria-label="A dot moving from side to side"></canvas>
+    <canvas id="canvas"></canvas>
     <div class="stage-bar">
-      <button type="button" id="btn-stage-ground" class="button">Grounding</button>
-      <button type="button" id="btn-stage-stop" class="button">Stop</button>
+      <button type="button" id="btn-stage-ground" class="button"><span lang="en">Grounding</span><span lang="de">Erdung</span></button>
+      <button type="button" id="btn-stage-stop" class="button"><span lang="en">Stop</span><span lang="de">Stopp</span></button>
     </div>
   </div>
 
   <!-- Grounding: inverted colors, a circle that breathes in a four second box. -->
   <div id="grounding" class="grounding" hidden role="dialog" aria-modal="true" aria-labelledby="grounding-text">
-    <div class="breath" id="breath"><span id="breath-word">Breathe in</span></div>
-    <p id="grounding-text">Feel the ground beneath you.<br>You are here, now.</p>
-    <button type="button" id="btn-return" class="button inverted">Return</button>
+    <div class="breath" id="breath"><span id="breath-word"></span></div>
+    <p id="grounding-text"><span lang="en">Feel the ground beneath you.<br>You are here, now.</span><span lang="de">Spür den Boden unter dir.<br>Du bist hier, jetzt.</span></p>
+    <button type="button" id="btn-return" class="button inverted"><span lang="en">Return</span><span lang="de">Zurück</span></button>
   </div>
 
   <script type="module">
@@ -480,6 +509,15 @@
     const TONE_GAIN = 0.15;
     const BREATH_PHASE_MS = 4000;
     const TRAIL_ALPHA = 0.3;
+
+    // Interface strings. The prose is in the markup, one element per language;
+    // only what the script writes lives here.
+    const LANG = document.documentElement.lang === "de" ? "de" : "en";
+    const T = {
+      en: { canvas: "A dot moving from side to side", in: "Breathe in", out: "Breathe out", hold: "Hold" },
+      de: { canvas: "Ein Punkt, der von Seite zu Seite wandert", in: "Einatmen", out: "Ausatmen", hold: "Halten" },
+    }[LANG];
+    const num = (v, digits) => LANG === "de" ? v.toFixed(digits).replace(".", ",") : v.toFixed(digits);
 
     const $ = (id) => document.getElementById(id);
 
@@ -544,7 +582,7 @@
     }
 
     function render() {
-      ui.valSpeed.textContent = `${state.speed.toFixed(2)} Hz`;
+      ui.valSpeed.textContent = `${num(state.speed, 2)} Hz`;
       ui.valSize.textContent = `${state.size} px`;
     }
 
@@ -669,10 +707,10 @@
     // CSS transition; this only flips the class and the word on phase change.
 
     const BREATH = [
-      ["Breathe in", true],
-      ["Hold", true],
-      ["Breathe out", false],
-      ["Hold", false],
+      [T.in, true],
+      [T.hold, true],
+      [T.out, false],
+      [T.hold, false],
     ];
     let breathTimer = 0;
     let breathPhase = 0;
@@ -765,6 +803,8 @@
       }
     });
 
+    ui.canvas.setAttribute("aria-label", T.canvas);
+    ui.breathWord.textContent = T.in;
     load();
   </script>
 </body>
