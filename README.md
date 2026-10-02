@@ -1,6 +1,6 @@
 # open desensitizer
 
-Bilateral stimulation in the browser. A dot moves from side to side, an optional tone follows it between the ears, and a grounding exercise is one key away. One HTML file with everything in it, nothing else.
+Bilateral stimulation in the browser. A dot moves from side to side, an optional tone follows it between the ears, and a grounding exercise is one key away. One HTML file with everything in it, nothing else. In English and German, chosen by the browser's language.
 
 **Site**: [pajew-ski.github.io/open-desensitizer](https://pajew-ski.github.io/open-desensitizer/)
 
@@ -34,7 +34,9 @@ open index.html
 
 The whole app is `index.html`; copy that one file anywhere and it runs. There is no build step and no dependency. Any static host serves it as is; on GitHub Pages, deploy from the root of `main`. The footer links adapt to a fork automatically.
 
-Everything here was built by a coding agent from [AGENTS.md](AGENTS.md), which is the design and behavior spec of the tool.
+The page speaks English and German. It shows German when the browser's first language is German and English otherwise; `?lang=de` or `?lang=en` overrides that.
+
+Everything here was built by a coding agent from [AGENTS.md](AGENTS.md), which is the design and behavior spec of the tool. It is a sibling of [open entrainer](https://github.com/pajew-ski/open-entrainer) and [open helix](https://github.com/pajew-ski/open-helix).
 
 ## License
 

@@ -1,6 +1,6 @@
 # AGENTS.md
 
-Public GitHub repo, project name **open-desensitizer**. Content: a bilateral stimulation tool in the browser. A dot moves from side to side, an optional tone pans with it, and a grounding exercise is one key away. It is a sibling of **open-entrainer** and shares its design with **temet-nosce**; the three should look and read as one family.
+Public GitHub repo, project name **open-desensitizer**. Content: a bilateral stimulation tool in the browser. A dot moves from side to side, an optional tone pans with it, and a grounding exercise is one key away. It is a sibling of **open-entrainer** and **open-helix** and shares its design with **temet-nosce**; the four should look and read as one family.
 
 Target audience: someone who wants to calm down or process something on their own, without an account, an app store, or a subscription. The tool has to be understood in one screen and trusted in one read.
 
@@ -11,6 +11,7 @@ Target audience: someone who wants to calm down or process something on their ow
 - No external resource of any kind: no CDN, no web font, no analytics
 - No accounts, no network requests, no data leaving the page
 - No manual dark/light toggle. Automatic only, via `prefers-color-scheme`
+- No manual language switch. Automatic only, via the browser's language, with a URL override
 - No color. The design is achromatic; the dot is the text color on the page color
 - No safety modal. The safety text is on the page, above the start button
 
@@ -28,7 +29,7 @@ GitHub Pages deploys from the root of `main`. The footer derives its GitHub link
 
 ## Design
 
-The inline stylesheet begins with the token block from temet-nosce, verbatim. It stays verbatim in all three projects; a change to the tokens is a change to all three.
+The inline stylesheet begins with the token block from temet-nosce, verbatim. It stays verbatim in all projects of the family; a change to the tokens is a change to all of them.
 
 - Color: oklch with chroma 0. Light: bg 98%, surface 94%, border 85%, text 15%, muted 40%. Dark flips the scale under `prefers-color-scheme: dark`. `color-scheme: light dark` on the root so form controls follow.
 - Spacing: Fibonacci in pixels, 5 8 13 21 34 55 89 144, as `--space-1` to `--space-8`.
@@ -47,15 +48,22 @@ The inline stylesheet begins with the token block from temet-nosce, verbatim. It
 - Keys: Space opens grounding whenever it is not already open (ignored while a form control is focused and no session runs). Esc closes grounding or stops the session. F toggles fullscreen. Touch users get Grounding and Stop buttons in the corner of the stage.
 - On stop, focus returns to the start button.
 
+## Language
+
+The page ships in English and German in the same file. A small classic script in the head sets `<html lang>` before the first paint: German when the browser's first language starts with `de`, English otherwise; `?lang=de` or `?lang=en` overrides. Without script the page stays English.
+
+- Prose in the markup exists once per language, as sibling elements with `lang="en"` and `lang="de"`. One CSS rule hides every element whose `lang` does not match the root. Short labels follow the same pattern with sibling spans.
+- Strings the script writes live in a small table `T` with one entry per language. Numbers use a decimal point in English and a decimal comma in German.
+
 ## Copy
 
-English throughout. Plain sentences, present tense, no exclamation marks, no emoji, no em dashes. Say what the tool does and what it does not. Warnings are stated once, above the start button, and not repeated in a modal. Product names are lowercase in headings and the footer, as in temet-nosce.
+Plain sentences, present tense, no exclamation marks, no emoji, no em dashes, in both languages. The German avoids direct address where an infinitive does the job. Say what the tool does and what it does not. Warnings are stated once, above the start button, and not repeated in a modal. Product names are lowercase in headings and the footer, as in temet-nosce. README, AGENTS.md and commit messages are English.
 
 ## Files
 
 ### `index.html`
 
-One file with three parts: the `<style>` block in the head, the markup, and one `<script type="module">` at the end of the body (plus the small footer module before it).
+One file with four parts: the language script and the `<style>` block in the head, the markup, and one `<script type="module">` at the end of the body (plus the small footer module before it).
 
 Markup: hero with the project name and one sentence. Sections: How it works, Before you start, Session. Footer with the AGENTS.md and source links and the module that rewrites them from the Pages URL. Two overlays after the footer, both `hidden` by default: `#stage` with the canvas and a corner bar, `#grounding` with the breathing circle, the line, and the Return button.
 
